@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: cedric-backend
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r backend/requirements.txt
+      cd backend/myproject
+      python manage.py collectstatic --noinput
+    startCommand: gunicorn --chdir backend/myproject myproject.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.2
+      - key: PYTHONUNBUFFERED
+        value: true

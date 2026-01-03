@@ -64,7 +64,7 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      const contactUrl = API_ENDPOINTS.CONTACTS || 'http://localhost:8000/api/contact-message/';
+      const contactUrl = API_ENDPOINTS.CONTACTS;
       const response = await fetch(contactUrl, {
         method: 'POST',
         headers: {

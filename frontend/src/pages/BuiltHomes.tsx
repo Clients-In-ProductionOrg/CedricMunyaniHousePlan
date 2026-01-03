@@ -68,7 +68,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
   useEffect(() => {
     const fetchYocoKey = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/yoco-public-key/');
+        const response = await fetch(`${API_ENDPOINTS.BACKEND_URL}/api/yoco-public-key/`);
         const data = await response.json();
         setYocoPublicKey(data.public_key);
       } catch (error) {
@@ -116,7 +116,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
 
           // Send token to backend
           try {
-            const response = await fetch('http://localhost:8000/api/process-payment/', {
+            const response = await fetch(`${API_ENDPOINTS.BACKEND_URL}/api/process-payment/`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -402,7 +402,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                   onClick={async () => {
                     // Save purchase to database
                     try {
-                      const response = await fetch('http://localhost:8000/api/purchase/', {
+                      const response = await fetch(API_ENDPOINTS.PURCHASES, {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',

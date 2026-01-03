@@ -40,8 +40,7 @@ const GetQuote = () => {
 
     try {
       // Send data to backend API matching QuoteRequest model
-      const quoteUrl = API_ENDPOINTS.QUOTES || 'http://localhost:8000/api/quote-request/';
-      const response = await fetch(quoteUrl, {
+      const response = await fetch(API_ENDPOINTS.QUOTES, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
