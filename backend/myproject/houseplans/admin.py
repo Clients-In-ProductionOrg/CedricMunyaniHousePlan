@@ -296,7 +296,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Contact Information', {
-            'fields': ('phone', 'email', 'address', 'company_name', 'website_url')
+            'fields': ('phone', 'email', 'address', 'company_name', 'website_url', 'home_video_url')
         }),
         ('Operating Hours', {
             'fields': ('monday_friday_hours', 'saturday_hours', 'sunday_hours')

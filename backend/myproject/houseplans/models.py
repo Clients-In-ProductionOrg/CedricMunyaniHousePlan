@@ -281,6 +281,7 @@ class SiteSettings(models.Model):
     # Additional Info
     company_name = models.CharField(max_length=200, blank=True, help_text="Your company name")
     website_url = models.URLField(blank=True, help_text="Your website URL")
+    home_video_url = models.URLField(blank=True, help_text="Homepage YouTube video URL")
     
     # Timestamps
     updated_at = models.DateTimeField(auto_now=True)

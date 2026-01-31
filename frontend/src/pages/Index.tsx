@@ -17,6 +17,32 @@ import houseColonial from "@/assets/house-colonial.jpg";
 import houseRanch from "@/assets/house-ranch.jpg";
 import houseContemporary from "@/assets/house-contemporary.jpg";
 
+// Helper function to convert YouTube URLs to embed format
+function convertYoutubeUrl(url: string): string {
+  if (!url) return '';
+
+  if (url.includes('youtube.com/embed/')) {
+    return url;
+  }
+
+  let videoId = '';
+
+  if (url.includes('youtu.be/')) {
+    videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+  } else if (url.includes('watch?v=')) {
+    videoId = url.split('watch?v=')[1]?.split('&')[0] || '';
+  } else if (url.includes('youtube.com/watch')) {
+    const urlParams = new URLSearchParams(url.split('?')[1]);
+    videoId = urlParams.get('v') || '';
+  }
+
+  if (videoId) {
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}`;
+  }
+
+  return url;
+}
+
 // HousePlanCard Component
 const HousePlanCard = ({ 
   image, 
@@ -128,6 +154,15 @@ const Index = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch site settings (home video link)
+        const settingsResponse = await fetch(API_ENDPOINTS.SITE_SETTINGS);
+        if (settingsResponse.ok) {
+          const settingsData = await settingsResponse.json();
+          if (settingsData?.home_video_url) {
+            setYoutubeLink(convertYoutubeUrl(settingsData.home_video_url));
+          }
+        }
+
         // Fetch all house plans
         const plansResponse = await fetch(API_ENDPOINTS.PLANS);
         const plansData = await plansResponse.json();
