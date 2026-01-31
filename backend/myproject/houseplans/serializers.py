@@ -37,7 +37,7 @@ class HousePlanListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'description', 'price', 'bedrooms', 'bathrooms',
             'garage', 'square_feet', 'width_meters', 'depth_meters',
-            'primary_image', 'images', 'style', 'status', 'is_popular',
+            'primary_image', 'video_url', 'images', 'style', 'status', 'is_popular',
             'is_best_selling', 'is_new', 'is_pet_friendly'
         ]
 

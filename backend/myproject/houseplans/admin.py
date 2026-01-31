@@ -1,7 +1,10 @@
 from django.contrib import admin
+from django import forms
 from django.urls import path
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
+from django.db.models import Max
+from django.forms.models import BaseInlineFormSet
 from .models import HousePlan, HousePlanImage, Floor, Feature, Amenity, Room, QuoteRequest, ContactMessage, SiteSettings, Purchase
 
 
@@ -11,8 +14,79 @@ class RoomInline(admin.TabularInline):
     fields = ('name', 'quantity', 'description', 'order')
 
 
+class MultiFileInput(forms.FileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    def to_python(self, data):
+        if not data:
+            return []
+        if isinstance(data, (list, tuple)):
+            return data
+        return [data]
+
+    def validate(self, data):
+        super().validate(data)
+
+    def run_validators(self, data):
+        if not data:
+            return
+        for file in data:
+            super().run_validators(file)
+
+
+class HousePlanImageInlineForm(forms.ModelForm):
+    image = MultipleFileField(
+        required=False,
+        widget=MultiFileInput(attrs={'multiple': True, 'accept': 'image/*'}),
+        help_text='Select multiple images here (Ctrl/Shift) or use Bulk Images Upload below.'
+    )
+
+    class Meta:
+        model = HousePlanImage
+        fields = ('image', 'title', 'order')
+
+
+class HousePlanImageInlineFormSet(BaseInlineFormSet):
+    def save_new(self, form, commit=True):
+        images = form.cleaned_data.get('image') or []
+        if not isinstance(images, (list, tuple)):
+            images = [images] if images else []
+
+        title = form.cleaned_data.get('title') or ''
+        order = form.cleaned_data.get('order')
+
+        if order is None:
+            max_order = (
+                HousePlanImage.objects.filter(house_plan=self.instance)
+                .aggregate(Max('order'))
+                .get('order__max')
+            ) or 0
+            order = max_order + 1
+
+        created = None
+        if images:
+            for idx, uploaded in enumerate(images):
+                obj = HousePlanImage(
+                    house_plan=self.instance,
+                    image=uploaded,
+                    title=title or uploaded.name,
+                    order=order + idx,
+                )
+                if commit:
+                    obj.save()
+                if created is None:
+                    created = obj
+            return created
+
+        return super().save_new(form, commit=commit)
+
+
 class HousePlanImageInline(admin.TabularInline):
     model = HousePlanImage
+    form = HousePlanImageInlineForm
+    formset = HousePlanImageInlineFormSet
     extra = 1
     fields = ('image', 'title', 'order')
 
@@ -35,8 +109,25 @@ class AmenityInline(admin.TabularInline):
     fields = ('name', 'description', 'order')
 
 
+class MultiFileInput(forms.FileInput):
+    allow_multiple_selected = True
+
+
+class HousePlanAdminForm(forms.ModelForm):
+    bulk_images = forms.FileField(
+        required=False,
+        widget=MultiFileInput(attrs={'multiple': True}),
+        help_text='Select multiple images to upload at once.'
+    )
+
+    class Meta:
+        model = HousePlan
+        fields = '__all__'
+
+
 @admin.register(HousePlan)
 class HousePlanAdmin(admin.ModelAdmin):
+    form = HousePlanAdminForm
     list_display = ('title', 'bedrooms', 'bathrooms', 'price', 'is_popular', 'is_best_selling', 'is_new', 'created_at')
     list_filter = ('is_popular', 'is_best_selling', 'is_new', 'is_pet_friendly', 'bedrooms', 'bathrooms', 'created_at')
     search_fields = ('title', 'description')
@@ -61,6 +152,10 @@ class HousePlanAdmin(admin.ModelAdmin):
             'fields': ('primary_image', 'video_url'),
             'description': 'Primary/thumbnail image and YouTube video URL'
         }),
+        ('Bulk Images Upload', {
+            'fields': ('bulk_images',),
+            'description': 'Select multiple images to upload in one go.'
+        }),
         ('Features & Status', {
             'fields': ('is_popular', 'is_best_selling', 'is_new', 'is_pet_friendly')
         }),
@@ -69,6 +164,25 @@ class HousePlanAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        bulk_files = form.files.getlist('bulk_images')
+        if bulk_files:
+            max_order = (
+                HousePlanImage.objects.filter(house_plan=obj)
+                .aggregate(Max('order'))
+                .get('order__max')
+            ) or 0
+            next_order = max_order + 1
+            for uploaded in bulk_files:
+                HousePlanImage.objects.create(
+                    house_plan=obj,
+                    image=uploaded,
+                    title=uploaded.name,
+                    order=next_order
+                )
+                next_order += 1
 
 
 @admin.register(HousePlanImage)
