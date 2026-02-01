@@ -14,7 +14,6 @@ import {
   Ruler, 
   CheckCircle2, 
   X,
-  CreditCard,
   Building,
   MapPin,
   ArrowRight
@@ -26,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { API_ENDPOINTS } from '@/config/constants';
+import { API_ENDPOINTS, BACKEND_URL } from '@/config/constants';
 import { housePlans } from '@/data/housePlans';
 import { builtHomes } from '@/data/builtHomes';
 
@@ -55,8 +54,6 @@ export const HouseDetails = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [expandedFloors, setExpandedFloors] = useState<Record<number, boolean>>({ 0: true });
   const [showBuyModal, setShowBuyModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [showImageFullscreen, setShowImageFullscreen] = useState(false);
   const [contactInfo, setContactInfo] = useState({ 
@@ -67,11 +64,6 @@ export const HouseDetails = () => {
     city: '',
     pickupPoint: '',
     areaMall: ''
-  });
-  const [paymentInfo, setPaymentInfo] = useState({ 
-    cardNumber: '', 
-    expiryDate: '', 
-    cvv: '' 
   });
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -171,6 +163,62 @@ export const HouseDetails = () => {
     { label: 'Levels', value: plan.levels, icon: Layers },
     { label: 'Floor Area', value: `${plan.floorArea} m²`, icon: Ruler },
   ];
+
+   const handleCheckoutPayment = async () => {
+      try {
+         const purchaseResponse = await fetch(API_ENDPOINTS.PURCHASES, {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+               house_plan_id: plan.id,
+               full_name: contactInfo.name,
+               email: contactInfo.email,
+               phone_number: contactInfo.phone,
+               province: contactInfo.province,
+               city: contactInfo.city,
+               pick_up_point: contactInfo.pickupPoint,
+               area_mall: contactInfo.areaMall,
+            })
+         });
+
+         const purchaseData = await purchaseResponse.json();
+         if (!purchaseData.id) {
+            alert('Error creating purchase. Please try again.');
+            return;
+         }
+
+         const origin = window.location.origin;
+         const basePath = `${origin}/house-details/${plan.id}`;
+         const successUrl = `${basePath}?checkout=success&purchase_id=${purchaseData.id}`;
+         const cancelUrl = `${basePath}?checkout=cancel&purchase_id=${purchaseData.id}`;
+         const failureUrl = `${basePath}?checkout=failure&purchase_id=${purchaseData.id}`;
+
+         const checkoutResponse = await fetch(`${BACKEND_URL}/api/create-checkout/`, {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+               purchase_id: purchaseData.id,
+               success_url: successUrl,
+               cancel_url: cancelUrl,
+               failure_url: failureUrl,
+            })
+         });
+
+         const checkoutData = await checkoutResponse.json();
+         if (checkoutData.success && checkoutData.redirect_url) {
+            window.location.href = checkoutData.redirect_url;
+         } else {
+            alert('Payment initialization failed. Please try again.');
+         }
+      } catch (error) {
+         console.error('Payment error:', error);
+         alert('Payment processing error. Please try again.');
+      }
+   };
 
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
@@ -564,183 +612,122 @@ export const HouseDetails = () => {
       )}
 
       {/* Buy Modal - Yoco Style */}
-      {(showBuyModal || showPaymentModal || showSuccessModal) && (
+      {showBuyModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
-           {showBuyModal && !showPaymentModal && (
-              <Card className="w-full max-w-lg border-2 border-primary/20 shadow-2xl animate-in zoom-in-95 max-h-[85vh] flex flex-col">
-                 <div className="relative shrink-0 h-32 bg-primary/10 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-blue-600/20" />
-                    <div className="absolute bottom-4 left-6">
-                       <h2 className="text-2xl font-bold">Purchase {plan.title}</h2>
-                       <p className="text-sm text-muted-foreground">{plan.bedrooms} BEDROOMS</p>
-                    </div>
-                    <button onClick={() => setShowBuyModal(false)} className="absolute top-4 right-4 p-2 bg-background/50 hover:bg-background rounded-full transition-colors">
-                       <X className="w-4 h-4" />
-                    </button>
+           <Card className="w-full max-w-lg border-2 border-primary/20 shadow-2xl animate-in zoom-in-95 max-h-[85vh] flex flex-col">
+              <div className="relative shrink-0 h-32 bg-primary/10 overflow-hidden">
+                 <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-blue-600/20" />
+                 <div className="absolute bottom-4 left-6">
+                    <h2 className="text-2xl font-bold">Purchase {plan.title}</h2>
+                    <p className="text-sm text-muted-foreground">{plan.bedrooms} BEDROOMS</p>
                  </div>
-                 <CardContent className="p-6 space-y-6 overflow-y-auto">
-                    <div className="flex justify-between items-center p-4 bg-muted/50 rounded-xl border border-border/50">
-                       <div>
-                          <p className="font-semibold">Plan Price</p>
-                       </div>
-                       <p className="text-xl font-bold text-primary">R{plan.price.toLocaleString()}</p>
+                 <button onClick={() => setShowBuyModal(false)} className="absolute top-4 right-4 p-2 bg-background/50 hover:bg-background rounded-full transition-colors">
+                    <X className="w-4 h-4" />
+                 </button>
+              </div>
+              <CardContent className="p-6 space-y-6 overflow-y-auto">
+                 <div className="flex justify-between items-center p-4 bg-muted/50 rounded-xl border border-border/50">
+                    <div>
+                       <p className="font-semibold">Plan Price</p>
                     </div>
+                    <p className="text-xl font-bold text-primary">R{plan.price.toLocaleString()}</p>
+                 </div>
+                 
+                 <div className="space-y-4">
+                    <h3 className="font-semibold border-b pb-2">Contact Information</h3>
                     
-                    <div className="space-y-4">
-                       <h3 className="font-semibold border-b pb-2">Contact Information</h3>
-                       
-                       <div className="space-y-2">
-                          <Label>Your Name</Label>
-                          <Input 
-                                placeholder="Enter your full name" 
-                                value={contactInfo.name}
-                                onChange={e => setContactInfo({...contactInfo, name: e.target.value})}
-                          />
-                       </div>
-
-                       <div className="space-y-2">
-                          <Label>Your Email</Label>
-                          <Input 
-                             type="email" 
-                             placeholder="Enter your email address" 
-                             value={contactInfo.email}
-                             onChange={e => setContactInfo({...contactInfo, email: e.target.value})}
-                          />
-                       </div>
-
-                       <div className="space-y-2">
-                          <Label>Your Phone</Label>
-                          <Input 
-                             placeholder="Enter your phone number" 
-                             value={contactInfo.phone}
-                             onChange={e => setContactInfo({...contactInfo, phone: e.target.value})}
-                          />
-                       </div>
-
-                       <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                             <Label>Province</Label>
-                             <Input 
-                                placeholder="e.g. Gauteng" 
-                                value={contactInfo.province}
-                                onChange={e => setContactInfo({...contactInfo, province: e.target.value})}
-                             />
-                          </div>
-                          <div className="space-y-2">
-                             <Label>City</Label>
-                             <Input 
-                                placeholder="e.g. Johannesburg" 
-                                value={contactInfo.city}
-                                onChange={e => setContactInfo({...contactInfo, city: e.target.value})}
-                             />
-                          </div>
-                       </div>
-                       
-                       <div className="space-y-2">
-                          <Label>Pick-up Point</Label>
-                           <Input 
-                             placeholder="e.g. PostNet or Pep Store" 
-                             value={contactInfo.pickupPoint}
-                             onChange={e => setContactInfo({...contactInfo, pickupPoint: e.target.value})}
-                          />
-                       </div>
-
-                       <div className="space-y-2">
-                          <Label>Area / Mall</Label>
-                           <Input 
-                             placeholder="e.g. Sandton City" 
-                             value={contactInfo.areaMall}
-                             onChange={e => setContactInfo({...contactInfo, areaMall: e.target.value})}
-                          />
-                       </div>
+                    <div className="space-y-2">
+                       <Label>Your Name</Label>
+                       <Input 
+                             placeholder="Enter your full name" 
+                             value={contactInfo.name}
+                             onChange={e => setContactInfo({...contactInfo, name: e.target.value})}
+                       />
                     </div>
 
-                    <div className="flex gap-3 pt-2">
-                       <Button 
-                        size="lg"
-                        className="flex-1 text-base font-semibold" 
-                        onClick={() => { setShowBuyModal(false); setShowPaymentModal(true); }}
-                       >
-                          Proceed to Payment <ArrowRight className="ml-2 w-4 h-4" />
-                       </Button>
-                       <Button 
-                        variant="outline"
-                        size="lg"
-                        className="flex-1 text-base"
-                        onClick={() => setShowBuyModal(false)}
-                       >
-                          Cancel
-                       </Button>
+                    <div className="space-y-2">
+                       <Label>Your Email</Label>
+                       <Input 
+                          type="email" 
+                          placeholder="Enter your email address" 
+                          value={contactInfo.email}
+                          onChange={e => setContactInfo({...contactInfo, email: e.target.value})}
+                       />
                     </div>
-                 </CardContent>
-              </Card>
-           )}
 
-           {showPaymentModal && (
-              <Card className="w-full max-w-lg border-2 border-primary/20 shadow-2xl animate-in zoom-in-95">
-                 <div className="p-6 border-b border-border/50 flex justify-between items-center">
-                    <h2 className="text-xl font-bold flex items-center gap-2"><CreditCard className="w-5 h-5" /> Payment Details</h2>
-                    <button onClick={() => setShowPaymentModal(false)}><X className="w-5 h-5" /></button>
-                 </div>
-                 <CardContent className="p-6 space-y-6">
-                    <div className="p-4 bg-blue-500/5 text-blue-600 rounded-lg text-sm border border-blue-100 flex gap-3">
-                       <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                       <div>
-                          <span className="font-bold">Secure Transaction.</span> Your payment is processed securely via our encrypted payment gateway.
+                    <div className="space-y-2">
+                       <Label>Your Phone</Label>
+                       <Input 
+                          placeholder="Enter your phone number" 
+                          value={contactInfo.phone}
+                          onChange={e => setContactInfo({...contactInfo, phone: e.target.value})}
+                       />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <Label>Province</Label>
+                          <Input 
+                             placeholder="e.g. Gauteng" 
+                             value={contactInfo.province}
+                             onChange={e => setContactInfo({...contactInfo, province: e.target.value})}
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <Label>City</Label>
+                          <Input 
+                             placeholder="e.g. Johannesburg" 
+                             value={contactInfo.city}
+                             onChange={e => setContactInfo({...contactInfo, city: e.target.value})}
+                          />
                        </div>
                     </div>
                     
-                    <div className="space-y-4">
-                       <div className="space-y-2">
-                          <Label>Card Number</Label>
-                          <div className="relative">
-                             <CreditCard className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                             <Input className="pl-9" placeholder="0000 0000 0000 0000" />
-                          </div>
-                       </div>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                             <Label>Expiry</Label>
-                             <Input placeholder="MM/YY" />
-                          </div>
-                          <div className="space-y-2">
-                             <Label>CVC</Label>
-                             <Input placeholder="123" type="password" />
-                          </div>
-                       </div>
+                    <div className="space-y-2">
+                       <Label>Pick-up Point</Label>
+                        <Input 
+                          placeholder="e.g. PostNet or Pep Store" 
+                          value={contactInfo.pickupPoint}
+                          onChange={e => setContactInfo({...contactInfo, pickupPoint: e.target.value})}
+                       />
                     </div>
 
-                    <div className="flex justify-between items-center py-4 border-t border-border/50">
-                       <span className="font-semibold">Total to Pay</span>
-                       <span className="text-2xl font-bold text-primary">R{plan.price.toLocaleString()}</span>
+                    <div className="space-y-2">
+                       <Label>Area / Mall</Label>
+                        <Input 
+                          placeholder="e.g. Sandton City" 
+                          value={contactInfo.areaMall}
+                          onChange={e => setContactInfo({...contactInfo, areaMall: e.target.value})}
+                       />
                     </div>
+                 </div>
 
-                    <Button size="lg" className="w-full h-12 shadow-xl shadow-primary/20" onClick={() => { setShowPaymentModal(false); setShowSuccessModal(true); }}>
-                       Confirm Payment
-                    </Button>
-                 </CardContent>
-              </Card>
-           )}
-
-           {showSuccessModal && (
-              <Card className="w-full max-w-md border-none shadow-2xl animate-in zoom-in-95 bg-white">
-                 <CardContent className="p-10 text-center">
-                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-200">
-                       <CheckCircle2 className="w-10 h-10" />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-2">Payment Successful!</h2>
-                    <p className="text-muted-foreground mb-8">
-                       Thank you, {contactInfo.name || 'valued customer'}. Your house plan files have been sent to <strong>{contactInfo.email || 'your email'}</strong>.
-                    </p>
-                    <Button className="w-full h-12" onClick={() => { 
-                       setShowSuccessModal(false); 
+                 <div className="flex gap-3 pt-2">
+                    <Button 
+                     size="lg"
+                     className="flex-1 text-base font-semibold" 
+                     onClick={() => {
+                       if (!contactInfo.name || !contactInfo.email || !contactInfo.phone) {
+                         alert('Please fill in all required fields');
+                         return;
+                       }
                        setShowBuyModal(false);
-                    }}>
-                       Return to Property
+                       handleCheckoutPayment();
+                     }}
+                    >
+                       Proceed to Payment <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
-                 </CardContent>
-              </Card>
-           )}
+                    <Button 
+                     variant="outline"
+                     size="lg"
+                     className="flex-1 text-base"
+                     onClick={() => setShowBuyModal(false)}
+                    >
+                       Cancel
+                    </Button>
+                 </div>
+              </CardContent>
+           </Card>
         </div>
       )}
     </div>
