@@ -1,11 +1,28 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
-import { Card } from '@/components/ui/card';
+import Footer from '@/components/Footer';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Phone, Mail, Clock, MapPin, Facebook, MessageCircle, Music, Home } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Phone, 
+  Mail, 
+  Clock, 
+  MapPin, 
+  Facebook, 
+  MessageCircle, 
+  Music, 
+  Home, 
+  Send,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  ArrowRight
+} from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/constants';
+import house4 from '@/assets/house4.jpg'; // Using house4 for diversity
 
 interface SiteSettings {
   phone: string;
@@ -64,6 +81,7 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
+        // API call logic
       const contactUrl = API_ENDPOINTS.CONTACTS;
       const response = await fetch(contactUrl, {
         method: 'POST',
@@ -80,20 +98,13 @@ const Contact = () => {
       });
 
       if (response.ok) {
-        // Show success modal
         setShowSuccessModal(true);
-        // Reset form
         setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
 
-        // Auto-close modal and countdown
-        let countdown = 5;
-        const interval = setInterval(() => {
-          countdown -= 1;
-          if (countdown === 0) {
-            clearInterval(interval);
+        // Auto-close modal
+        setTimeout(() => {
             setShowSuccessModal(false);
-          }
-        }, 1000);
+        }, 5000);
       } else {
         const errorData = await response.json();
         alert('Failed to send message: ' + (errorData.error || 'Please try again.'));
@@ -109,329 +120,320 @@ const Contact = () => {
   const contactInfo = siteSettings ? [
     {
       icon: Phone,
-      title: 'Phone',
+      title: 'Phone Support',
       details: [siteSettings.phone || '0695885837'],
       link: `tel:${siteSettings.phone || '0695885837'}`,
+      color: "text-blue-500",
+      bg: "bg-blue-500/10"
     },
     {
       icon: Mail,
-      title: 'Email',
+      title: 'Email Us',
       details: [siteSettings.email || 'Cedrichouseplan@gmail.com'],
       link: `mailto:${siteSettings.email || 'Cedrichouseplan@gmail.com'}`,
+      color: "text-purple-500",
+      bg: "bg-purple-500/10"
     },
     {
       icon: MapPin,
-      title: 'Address',
+      title: 'Visit Office',
       details: [siteSettings.address || 'South Africa, Venda'],
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10"
     },
     {
       icon: Clock,
-      title: 'Operating Hours',
+      title: 'Working Hours',
       details: [
-        `Monday - Friday: ${siteSettings.monday_friday_hours || '9:00 AM - 6:00 PM'}`,
+        `Mon - Fri: ${siteSettings.monday_friday_hours || '9:00 AM - 6:00 PM'}`,
         `Saturday: ${siteSettings.saturday_hours || '10:00 AM - 4:00 PM'}`,
-        `Sunday: ${siteSettings.sunday_hours || 'Closed'}`,
       ],
+      color: "text-amber-500",
+      bg: "bg-amber-500/10"
     },
   ] : [
     {
       icon: Phone,
-      title: 'Phone',
+      title: 'Phone Support',
       details: ['0695885837'],
       link: 'tel:0695885837',
+      color: "text-blue-500",
+      bg: "bg-blue-500/10"
     },
     {
       icon: Mail,
-      title: 'Email',
+      title: 'Email Us',
       details: ['Cedrichouseplan@gmail.com'],
       link: 'mailto:Cedrichouseplan@gmail.com',
+      color: "text-purple-500",
+      bg: "bg-purple-500/10"
     },
     {
       icon: MapPin,
-      title: 'Address',
+      title: 'Visit Office',
       details: ['South Africa, Venda'],
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10"
     },
     {
       icon: Clock,
-      title: 'Operating Hours',
-      details: ['Monday - Friday: 9:00 AM - 6:00 PM', 'Saturday: 10:00 AM - 4:00 PM', 'Sunday: Closed'],
-    },
-  ];
-
-  const socialLinks = [
-    {
-      icon: Facebook,
-      name: 'Facebook',
-      url: 'https://www.facebook.com/MPHOCEDRICHOUSEPLANS',
-      label: 'Follow us on Facebook',
-    },
-    {
-      icon: Music,
-      name: 'TikTok',
-      url: 'https://www.tiktok.com/@cedrichouseplanning?is_from_webapp=1&sender_device=pc',
-      label: 'Follow us on TikTok',
-    },
-    {
-      icon: MessageCircle,
-      name: 'WhatsApp',
-      url: 'https://wa.me/0695885837',
-      label: 'Message us on WhatsApp',
+      title: 'Working Hours',
+      details: ['Mon - Fri: 9:00 AM - 6:00 PM', 'Saturday: 10:00 AM - 4:00 PM'],
+      color: "text-amber-500",
+      bg: "bg-amber-500/10"
     },
   ];
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-background font-sans">
       <Header />
-      <div className="min-h-screen bg-background">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-primary to-primary/80 text-white py-20">
-          <div className="container mx-auto px-4">
-            <h1 className="text-5xl font-bold mb-4">Get in Touch</h1>
-            <p className="text-xl text-white/90 max-w-2xl">
-              Have a question or ready to start your dream home project? We'd love to hear from you.
-            </p>
-          </div>
+      
+      {/* Success Modal Overlay */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-card border border-primary/20 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center space-y-4 animate-in zoom-in-95 duration-300">
+               <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                   <CheckCircle2 className="w-8 h-8" />
+               </div>
+               <h3 className="text-2xl font-bold">Message Sent!</h3>
+               <p className="text-muted-foreground">
+                   Thank you for reaching out. Our team will get back to you within 24 hours.
+               </p>
+               <Button onClick={() => setShowSuccessModal(false)} className="w-full mt-4">
+                   Close Message
+               </Button>
+           </div>
         </div>
+      )}
 
-        {/* Contact Information Cards */}
-        <div className="py-20 bg-background">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold text-foreground mb-12 text-center">Contact Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-              {contactInfo.map((info, index) => {
-                const Icon = info.icon;
-                return (
-                  <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-primary/10 rounded-full">
-                        <Icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground mb-2">{info.title}</h3>
-                        {info.details.map((detail, idx) => (
-                          <p key={idx} className="text-sm text-muted-foreground">
-                            {info.link ? (
-                              <a href={info.link} className="hover:text-primary transition-colors">
-                                {detail}
-                              </a>
-                            ) : (
-                              detail
-                            )}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content: Contact Form and Map */}
-        <div className="py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              {/* Contact Form */}
-              <div>
-                <h2 className="text-3xl font-bold text-foreground mb-8">Send us a Message</h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Full Name</label>
-                    <Input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Your name"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Email Address</label>
-                    <Input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="your@email.com"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Phone Number</label>
-                    <Input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="+27 (0) 123 456 789"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Subject</label>
-                    <Input
-                      type="text"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      placeholder="What is this about?"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Message</label>
-                    <Textarea
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      placeholder="Tell us more about your project..."
-                      rows={5}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? 'Sending...' : 'Send Message'}
-                  </Button>
-                </form>
-              </div>
-
-              {/* Map and Social Links */}
-              <div className="space-y-8">
-                {/* Google Map */}
-                <div>
-                  <h2 className="text-3xl font-bold text-foreground mb-4">Our Location</h2>
-                  <div className="rounded-lg overflow-hidden shadow-lg h-96">
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      style={{ border: 0 }}
-                      loading="lazy"
-                      allowFullScreen
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3582.8225261649926!2d25.748486!3d-28.2341!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1e95a5c0e0e0e0ed%3A0x0!2sSouth%20Africa!5e0!3m2!1sen!2s!4v1234567890"
-                    />
-                  </div>
-                </div>
-
-                {/* Social Media Links */}
-                <div>
-                  <h2 className="text-3xl font-bold text-foreground mb-4">Connect With Us</h2>
-                  <div className="grid grid-cols-1 gap-4">
-                    {socialLinks.map((social, index) => {
-                      const Icon = social.icon;
-                      return (
-                        <a
-                          key={index}
-                          href={social.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-4 p-4 bg-background border border-border rounded-lg hover:shadow-lg hover:border-primary transition-all"
-                        >
-                          <div className="p-3 bg-primary/10 rounded-full">
-                            <Icon className="h-6 w-6 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-foreground">{social.name}</h3>
-                            <p className="text-sm text-muted-foreground">{social.label}</p>
-                          </div>
-                        </a>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* WhatsApp CTA Button */}
-                <a
-                  href={`https://wa.me/${(siteSettings?.phone || '0695885837').replace(/\D/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white py-4 px-6 rounded-lg font-semibold transition-colors"
-                >
-                  <MessageCircle className="h-6 w-6" />
-                  Chat with us on WhatsApp
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Success Modal */}
-        {showSuccessModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <Card className="bg-white p-8 rounded-lg shadow-xl max-w-sm mx-4">
-              <div className="text-center">
-                <div className="mb-4 text-5xl">✅</div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Message Sent Successfully!</h2>
-                <p className="text-muted-foreground mb-6">
-                  Thank you for reaching out to us. Our team will review your message and get back to you within 24 hours.
-                </p>
-                <p className="text-sm text-muted-foreground">Redirecting in a few seconds...</p>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* Footer */}
-        <footer className="bg-primary text-primary-foreground py-16">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Home className="h-6 w-6 text-primary-foreground" />
-                  <span className="text-lg font-bold text-primary-foreground">Cedric House Planning</span>
-                </div>
-                <p className="text-sm">
-                  Creating beautiful, functional house plans for your dream home.
-                </p>
-                <div className="flex gap-4">
-                  <a href="https://www.facebook.com/MPHOCEDRICHOUSEPLANS" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                    <Facebook className="h-5 w-5" />
-                  </a>
-                  <a href="https://www.tiktok.com/@cedrichouseplanning?lang=en" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                    <Music className="h-5 w-5" />
-                  </a>
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-primary-foreground mb-4">House Plans</h3>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Modern Plans</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Traditional Plans</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Small House Plans</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Luxury Plans</a></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-primary-foreground mb-4">Services</h3>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Custom Design</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Plan Modifications</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Construction Support</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Cost Estimates</a></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-primary-foreground mb-4">Support</h3>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Contact Us</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">FAQ</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Shipping Info</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Returns</a></li>
-                </ul>
-              </div>
+      <main className="flex-grow">
+        {/* Modern Hero Section */}
+        <section className="relative h-[55vh] min-h-[500px] flex items-center justify-center overflow-hidden">
+            <div className="absolute inset-0 z-0">
+               <div className="absolute inset-0 bg-slate-900/80 z-10" />
+               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-20" />
+               <img 
+                 src={house4} 
+                 alt="Contact Cedric House Designs" 
+                 className="w-full h-full object-cover object-center scale-105 animate-slow-zoom opacity-60"
+               />
             </div>
             
-            <div className="pt-8 border-t border-primary-foreground/20 text-center text-sm">
-              <p className="mb-2">© 2024 Cedric House Planning and Construction. All rights reserved.</p>
-              <p className="text-xs">Website Developers: <a href="#" className="text-red-400 hover:text-red-300 transition-opacity">TAD Developers</a></p>
+            <div className="container relative z-30 px-4 text-center">
+              <Badge className="mb-6 px-4 py-1.5 bg-primary/20 hover:bg-primary/20 text-primary border-primary/20 backdrop-blur-md">
+                 24/7 Support Available
+              </Badge>
+              <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6">
+                Let's Build Your <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+                  Dream Reality
+                </span>
+              </h1>
+              <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                Whether you have a specific project in mind or just want to explore possibilities, 
+                our team represents the pinnacle of architectural service.
+              </p>
             </div>
-          </div>
-        </footer>
-      </div>
-    </>
+        </section>
+
+        {/* Main Content Grid */}
+        <section className="py-24 pt-12 relative z-40 -mt-20">
+             <div className="container px-4">
+                 <div className="grid lg:grid-cols-5 gap-8">
+                     
+                     {/* Left Column: Contact Info & Socials */}
+                     <div className="lg:col-span-2 space-y-6">
+                         <div className="bg-card border border-border/50 rounded-2xl p-8 shadow-xl backdrop-blur-sm">
+                             <h3 className="text-2xl font-bold mb-6">Contact Details</h3>
+                             <div className="space-y-6">
+                                 {contactInfo.map((info, idx) => {
+                                     const Icon = info.icon;
+                                     return (
+                                         <a 
+                                            key={idx} 
+                                            href={info.link} 
+                                            className={`flex items-start gap-4 p-4 rounded-xl hover:bg-muted/50 transition-colors group ${info.link ? 'cursor-pointer' : 'cursor-default'}`}
+                                         >
+                                             <div className={`mt-1 p-2.5 rounded-lg ${info.bg} ${info.color} group-hover:scale-110 transition-transform`}>
+                                                 <Icon className="w-5 h-5" />
+                                             </div>
+                                             <div>
+                                                 <h4 className="font-semibold text-foreground">{info.title}</h4>
+                                                 {info.details.map((detail, i) => (
+                                                     <p key={i} className="text-sm text-muted-foreground mt-1">{detail}</p>
+                                                 ))}
+                                             </div>
+                                         </a>
+                                     )
+                                 })}
+                             </div>
+
+                             <div className="mt-8 pt-8 border-t border-border/50">
+                                 <h4 className="font-semibold mb-4">Connect With Us</h4>
+                                 <div className="flex gap-4">
+                                     <a href="https://www.facebook.com/MPHOCEDRICHOUSEPLANS" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-blue-600/10 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
+                                         <Facebook className="w-5 h-5" />
+                                     </a>
+                                     <a href="https://www.tiktok.com/@cedrichouseplanning" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-pink-600/10 text-pink-600 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all">
+                                         <Music className="w-5 h-5" />
+                                     </a>
+                                     <a href="https://wa.me/0695885837" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-green-600/10 text-green-600 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all">
+                                         <MessageCircle className="w-5 h-5" />
+                                     </a>
+                                 </div>
+                             </div>
+                         </div>
+
+                         {/* Mini FAQ Card */}
+                         <div className="bg-primary/5 border border-primary/10 rounded-2xl p-8">
+                             <div className="flex items-center gap-3 mb-4">
+                                 <HelpCircle className="w-6 h-6 text-primary" />
+                                 <h3 className="font-bold text-lg">Quick FAQ</h3>
+                             </div>
+                             <div className="space-y-4">
+                                 <div>
+                                     <h4 className="font-medium text-sm">Do you offer free quotes?</h4>
+                                     <p className="text-xs text-muted-foreground mt-1">Yes! Fill out the form or call us directly for a complimentary consultation.</p>
+                                 </div>
+                                 <div>
+                                     <h4 className="font-medium text-sm">Can I customize existing plans?</h4>
+                                     <p className="text-xs text-muted-foreground mt-1">Absolutely. All our plans are fully customizable to suit your plot and needs.</p>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+
+                     {/* Right Column: Contact Form */}
+                     <div className="lg:col-span-3">
+                         <Card className="border-none shadow-2xl bg-card/95 backdrop-blur-sm overflow-hidden h-full flex flex-col">
+                             <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+                             <CardContent className="p-8 md:p-10 flex-grow">
+                                 <div className="mb-8">
+                                     <h2 className="text-3xl font-bold mb-2">Send us a Message</h2>
+                                     <p className="text-muted-foreground">
+                                         Fill out the form below and our team will get back to you within 24 hours.
+                                     </p>
+                                 </div>
+
+                                 <form onSubmit={handleSubmit} className="space-y-6">
+                                     <div className="grid md:grid-cols-2 gap-6">
+                                         <div className="space-y-2">
+                                             <label className="text-sm font-medium text-muted-foreground ml-1">Full Name</label>
+                                             <Input 
+                                                name="name" 
+                                                value={formData.name} 
+                                                onChange={handleChange}
+                                                placeholder="John Doe" 
+                                                className="h-12 bg-muted/30 border-muted-foreground/20 focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                                                required 
+                                             />
+                                         </div>
+                                         <div className="space-y-2">
+                                             <label className="text-sm font-medium text-muted-foreground ml-1">Email Address</label>
+                                             <Input 
+                                                name="email" 
+                                                type="email"
+                                                value={formData.email} 
+                                                onChange={handleChange}
+                                                placeholder="john@example.com" 
+                                                className="h-12 bg-muted/30 border-muted-foreground/20 focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                                                required 
+                                             />
+                                         </div>
+                                     </div>
+
+                                     <div className="grid md:grid-cols-2 gap-6">
+                                         <div className="space-y-2">
+                                             <label className="text-sm font-medium text-muted-foreground ml-1">Phone Number</label>
+                                             <Input 
+                                                name="phone" 
+                                                type="tel"
+                                                value={formData.phone} 
+                                                onChange={handleChange}
+                                                placeholder="+27 00 000 0000" 
+                                                className="h-12 bg-muted/30 border-muted-foreground/20 focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                                             />
+                                         </div>
+                                         <div className="space-y-2">
+                                             <label className="text-sm font-medium text-muted-foreground ml-1">Subject</label>
+                                             <Input 
+                                                name="subject" 
+                                                value={formData.subject} 
+                                                onChange={handleChange}
+                                                placeholder="Project Inquiry" 
+                                                className="h-12 bg-muted/30 border-muted-foreground/20 focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                                                required 
+                                             />
+                                         </div>
+                                     </div>
+
+                                     <div className="space-y-2">
+                                         <label className="text-sm font-medium text-muted-foreground ml-1">Message</label>
+                                         <Textarea 
+                                            name="message" 
+                                            value={formData.message} 
+                                            onChange={handleChange}
+                                            placeholder="Tell us about your project dream..." 
+                                            className="min-h-[160px] bg-muted/30 border-muted-foreground/20 focus:border-primary focus:ring-primary/20 transition-all font-medium resize-none p-4"
+                                            required 
+                                         />
+                                     </div>
+
+                                     <Button 
+                                       type="submit" 
+                                       size="lg" 
+                                       disabled={isSubmitting}
+                                       className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 shadow-lg hover:shadow-primary/25 transition-all"
+                                     >
+                                         {isSubmitting ? (
+                                             <span className="flex items-center gap-2">
+                                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                 Sending...
+                                             </span>
+                                         ) : (
+                                             <span className="flex items-center gap-2">
+                                                 Send Message <Send className="w-5 h-5" />
+                                             </span>
+                                         )}
+                                     </Button>
+                                 </form>
+                             </CardContent>
+                         </Card>
+                     </div>
+                 </div>
+             </div>
+        </section>
+
+        {/* Extended Map Section */}
+        <section className="bg-muted/30 py-24">
+             <div className="container px-4 text-center">
+                 <h2 className="text-3xl font-bold mb-4">Visit Our Office</h2>
+                 <p className="text-muted-foreground mb-12 max-w-2xl mx-auto">
+                     We are conveniently located in Venda, South Africa. Drop by for a cup of coffee and a chat about your future home.
+                 </p>
+                 
+                 <div className="w-full h-[400px] bg-slate-200 rounded-3xl overflow-hidden shadow-inner relative group cursor-pointer">
+                     {/* Placeholder Map Pattern */}
+                     <div className="absolute inset-0 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] bg-cover opacity-20" />
+                     <div className="absolute inset-0 flex items-center justify-center bg-black/5 group-hover:bg-black/10 transition-colors">
+                         <div className="bg-white px-8 py-4 rounded-full shadow-xl flex items-center gap-3 animate-bounce">
+                             <MapPin className="w-6 h-6 text-red-500 fill-current" />
+                             <span className="font-bold text-slate-800">South Africa, Venda</span>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <div className="mt-12 flex justify-center">
+                     <Button variant="outline" size="lg" className="rounded-full gap-2 border-primary/20 hover:bg-primary/5">
+                        Get Directions <ArrowRight className="w-4 h-4"/>
+                     </Button>
+                 </div>
+             </div>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
   );
 };
 

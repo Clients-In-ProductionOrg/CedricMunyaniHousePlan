@@ -40,32 +40,59 @@ const Header = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-20 items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-          <Home className="h-8 w-8 text-primary" />
-          <span className="text-lg font-bold text-foreground hidden sm:inline">Cedric House Planning</span>
+        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-shrink-0 group">
+          <div className="bg-primary/10 p-2 rounded-xl group-hover:bg-primary/20 transition-colors">
+            <Home className="h-6 w-6 text-primary" />
+          </div>
+          <span className="text-xl font-bold tracking-tight text-foreground hidden sm:inline">Cedric House Planning</span>
         </Link>
         
         {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-1">
           {navLinks.map((link) => (
-            <Link key={link.to} to={link.to} className={getLinkClasses(link.to)}>
+            <Link 
+              key={link.to} 
+              to={link.to} 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                isActive(link.to) 
+                  ? "bg-primary/10 text-primary" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
               {link.label}
             </Link>
           ))}
         </nav>
         
         {/* Right side buttons and mobile menu toggle */}
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Theme Toggle */}
           <ThemeToggle />
+
+          {/* Munyai AI Button */}
+          <Button 
+            onClick={() => chatBotRef.current?.open()}
+            variant="outline"
+            className="hidden sm:flex border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary gap-2 h-10 px-4 rounded-full"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span className="hidden md:inline">Munyai AI</span>
+          </Button>
+
+          {/* Get Quote Button - Gradient CTA */}
+          <Link to="/get-quote">
+            <Button className="bg-gradient-to-r from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-white font-semibold shadow-lg shadow-primary/25 h-10 px-6 rounded-full transition-all hover:scale-105 active:scale-95">
+              Get Quote
+            </Button>
+          </Link>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="lg:hidden p-2 hover:bg-muted rounded-full transition-colors"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? (
@@ -74,22 +101,6 @@ const Header = () => {
               <Menu className="w-6 h-6" />
             )}
           </button>
-
-          {/* Munyai AI Button - Hide on very small screens */}
-          <Button 
-            onClick={() => chatBotRef.current?.open()}
-            className="hidden sm:flex bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 items-center gap-2"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span className="hidden md:inline">Munyai AI</span>
-          </Button>
-
-          {/* Get Quote Button - Show on all screens */}
-          <Link to="/get-quote">
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 text-xs sm:text-sm px-2 sm:px-4">
-              Get FREE Quote Now
-            </Button>
-          </Link>
         </div>
       </div>
 

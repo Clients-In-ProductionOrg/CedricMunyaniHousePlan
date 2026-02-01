@@ -101,27 +101,29 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
 
   return (
     <>
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="group relative bg-card rounded-3xl overflow-hidden border border-border/50 hover:border-primary/20 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 hover:-translate-y-1">
         <div 
-          className="relative aspect-[4/3] overflow-hidden bg-muted cursor-pointer group"
+          className="relative aspect-[4/3] overflow-hidden bg-muted cursor-pointer"
           onClick={() => setIsGalleryOpen(true)}
         >
           <img
             src={plan.images[currentImageIndex]}
             alt={plan.title}
-            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
           
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-            <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium bg-black/50 px-4 py-2 rounded-full">
-              View All {plan.images.length} Photos
-            </span>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center pointer-events-none">
+             <div className="bg-white/10 backdrop-blur-md border border-white/20 px-6 py-2 rounded-full transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                <span className="text-white font-medium drop-shadow-md">View {plan.images.length} Photos</span>
+             </div>
           </div>
           
-          <div className="absolute top-3 left-3 flex gap-2">
-            <Badge className="bg-green-600 text-white">Completed</Badge>
+          <div className="absolute top-4 left-4 flex gap-2 z-10">
+            <Badge className="bg-green-600/90 backdrop-blur-md text-white border-none shadow-lg">Completed</Badge>
             {plan.isPopular && (
-              <Badge className="bg-accent text-accent-foreground">Featured</Badge>
+              <Badge className="bg-amber-500/90 backdrop-blur-md text-white border-none shadow-lg">Featured</Badge>
             )}
           </div>
 
@@ -130,18 +132,18 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
               e.stopPropagation();
               setIsFavorite(!isFavorite);
             }}
-            className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+            className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center hover:bg-white/40 transition-all z-10 group/heart"
           >
             <Heart
               className={cn(
-                'w-5 h-5',
-                isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                'w-5 h-5 transition-colors',
+                isFavorite ? 'fill-red-500 text-red-500' : 'text-white group-hover/heart:text-red-500'
               )}
             />
           </button>
 
           {plan.images.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
               {plan.images.map((_, index) => (
                 <button
                   key={index}
@@ -150,10 +152,10 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                     setCurrentImageIndex(index);
                   }}
                   className={cn(
-                    'w-2 h-2 rounded-full transition-all',
+                    'h-1.5 rounded-full transition-all shadow-sm',
                     index === currentImageIndex
-                      ? 'bg-white w-4'
-                      : 'bg-white/50 hover:bg-white/75'
+                      ? 'bg-white w-6'
+                      : 'bg-white/40 w-1.5 hover:bg-white/60'
                   )}
                 />
               ))}
@@ -169,77 +171,87 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
           title={plan.title}
         />
 
-        <div className="p-5">
-          <div className="flex items-start justify-between gap-3 mb-4">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-foreground">
-                {plan.title}
-              </h3>
-            </div>
-            {plan.videoUrl && (
-              <Button 
-                size="sm"
-                onClick={() => setShowVideo(true)}
-                className="bg-red-400 hover:bg-red-500 text-white font-semibold shadow-md hover:shadow-lg transition-all whitespace-nowrap"
-              >
-                <svg className="w-4 h-4 mr-1 fill-current" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-                Watch Houseplan Video
-              </Button>
-            )}
+        <div className="p-6 space-y-5">
+          <div className="flex items-start justify-between gap-3">
+             <div className="space-y-1">
+                <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                  {plan.title}
+                </h3>
+                <p className="text-sm text-muted-foreground font-medium flex items-center gap-1">
+                   <Home className="w-3.5 h-3.5" /> 
+                   Built Home
+                </p>
+             </div>
+             <div className="text-right">
+                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-0.5">Price</p>
+                <div className="text-2xl font-bold text-primary">
+                  R{plan.price.toLocaleString()}
+                </div>
+             </div>
           </div>
 
-          <p className="text-2xl font-bold text-primary mb-4">
-            R{plan.price.toLocaleString()}
-          </p>
-
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Home className="w-4 h-4" />
-                <span>{plan.floorArea} m²</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Bed className="w-4 h-4" />
-                <span>{plan.bedrooms} Bedrooms</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Bath className="w-4 h-4" />
-                <span>{plan.bathrooms} Bathrooms</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Car className="w-4 h-4" />
-                <span>{plan.garage} Garage</span>
-              </div>
-            </div>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-4 gap-2 py-4 border-y border-border/40">
+             <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-secondary/30 text-center hover:bg-secondary/50 transition-colors">
+                <Home className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">{plan.floorArea}m²</span>
+                <span className="text-[10px] text-muted-foreground">Area</span>
+             </div>
+             <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-secondary/30 text-center hover:bg-secondary/50 transition-colors">
+                <Bed className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">{plan.bedrooms}</span>
+                <span className="text-[10px] text-muted-foreground">Beds</span>
+             </div>
+             <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-secondary/30 text-center hover:bg-secondary/50 transition-colors">
+                <Bath className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">{plan.bathrooms}</span>
+                <span className="text-[10px] text-muted-foreground">Baths</span>
+             </div>
+             <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-secondary/30 text-center hover:bg-secondary/50 transition-colors">
+                <Car className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">{plan.garage}</span>
+                <span className="text-[10px] text-muted-foreground">Garage</span>
+             </div>
+          </div>
+          
+          <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                {plan.levels} Level{plan.levels > 1 ? 's' : ''}
+             </div>
+             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                {plan.width}m × {plan.depth}m
+             </div>
           </div>
 
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-4 pb-4 border-b">
-            <span>{plan.levels} Level{plan.levels > 1 ? 's' : ''}</span>
-            <span>{plan.width}m × {plan.depth}m</span>
-          </div>
-
-          <div className="flex gap-3">
+          <div className="grid grid-cols-2 gap-3 pt-1">
             <Button 
-              className="flex-1" 
-              size="lg"
+              variant="outline"
+              className="w-full rounded-xl border-primary/20 hover:bg-primary/5 hover:text-primary font-semibold" 
               onClick={() => navigate(`/house-details/${plan.id}`)}
             >
-              View Details
+              Details
             </Button>
-            <Button 
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold" 
-              size="lg"
-              onClick={() => setShowBuyModal(true)}
-            >
-              Buy plan Online
-            </Button>
+            {plan.videoUrl ? (
+               <Button 
+                className="w-full rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 font-semibold gap-2"
+                onClick={() => setShowVideo(true)}
+               >
+                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                 Watch Video
+               </Button>
+            ) : (
+               <Button 
+                className="w-full rounded-xl font-semibold shadow-lg shadow-primary/25"
+                onClick={() => setShowBuyModal(true)}
+               >
+                 Buy Plan
+               </Button>
+            )}
           </div>
         </div>
-      </Card>
+      </div>
 
       {showVideo && plan.videoUrl && (
         <div 

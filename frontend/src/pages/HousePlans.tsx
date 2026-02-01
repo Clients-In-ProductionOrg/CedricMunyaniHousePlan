@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Square, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { API_ENDPOINTS, BACKEND_URL } from '@/config/constants';
 import {
   Select,
@@ -20,7 +21,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Drawer,
@@ -161,29 +162,31 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
 
   return (
     <>
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="group relative bg-card rounded-3xl overflow-hidden border border-border/50 hover:border-primary/20 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-shadow duration-500">
         <div 
-          className="relative aspect-[4/3] overflow-hidden bg-muted cursor-pointer group"
+          className="relative aspect-[4/3] overflow-hidden bg-muted cursor-pointer"
           onClick={handleOpenGallery}
         >
           <img
             src={plan.images[currentImageIndex]}
             alt={plan.title}
-            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
           />
           
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-            <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium bg-black/50 px-4 py-2 rounded-full">
-              View All {plan.images.length} Photos
-            </span>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center pointer-events-none">
+             <div className="bg-white/10 backdrop-blur-md border border-white/20 px-6 py-2 rounded-full transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                <span className="text-white font-medium drop-shadow-md">View {plan.images.length} Photos</span>
+             </div>
           </div>
           
-          <div className="absolute top-3 left-3 flex gap-2">
+          <div className="absolute top-4 left-4 flex gap-2 z-10">
             {plan.isNew && (
-              <Badge className="bg-accent text-accent-foreground">New</Badge>
+              <Badge className="bg-blue-500/90 backdrop-blur-md text-white border-none shadow-lg">New Arrival</Badge>
             )}
             {plan.isPopular && (
-              <Badge className="bg-accent text-accent-foreground">Popular</Badge>
+              <Badge className="bg-amber-500/90 backdrop-blur-md text-white border-none shadow-lg">Popular</Badge>
             )}
           </div>
 
@@ -192,18 +195,18 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
               e.stopPropagation();
               setIsFavorite(!isFavorite);
             }}
-            className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+            className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center hover:bg-white/40 transition-all z-10 group/heart"
           >
             <Heart
               className={cn(
-                'w-5 h-5',
-                isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                'w-5 h-5 transition-colors',
+                isFavorite ? 'fill-red-500 text-red-500' : 'text-white group-hover/heart:text-red-500'
               )}
             />
           </button>
 
           {plan.images.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
               {plan.images.map((_, index) => (
                 <button
                   key={index}
@@ -212,10 +215,10 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                     setCurrentImageIndex(index);
                   }}
                   className={cn(
-                    'w-2 h-2 rounded-full transition-all',
+                    'h-1.5 rounded-full transition-all shadow-sm',
                     index === currentImageIndex
-                      ? 'bg-white w-4'
-                      : 'bg-white/50 hover:bg-white/75'
+                      ? 'bg-white w-6'
+                      : 'bg-white/40 w-1.5 hover:bg-white/60'
                   )}
                 />
               ))}
@@ -231,77 +234,96 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
           title={plan.title}
         />
 
-        <div className="p-5">
-          <div className="flex items-start justify-between gap-3 mb-4">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-foreground">
-                {plan.title}
-              </h3>
-            </div>
-            {plan.videoUrl && (
-              <Button 
-                size="sm"
-                onClick={() => setShowVideo(true)}
-                className="bg-red-400 hover:bg-red-500 text-white font-semibold shadow-md hover:shadow-lg transition-all whitespace-nowrap"
-              >
-                <svg className="w-4 h-4 mr-1 fill-current" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-                Watch Houseplan Video
-              </Button>
-            )}
+        <div className="p-6 space-y-5">
+          <div className="flex items-start justify-between gap-3">
+             <div className="space-y-1">
+                <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                  {plan.title}
+                </h3>
+                <p className="text-sm text-muted-foreground font-medium flex items-center gap-1">
+                   <Home className="w-3.5 h-3.5" /> 
+                   {plan.propertyType || "Modern Home"}
+                </p>
+             </div>
+             <div className="text-right">
+                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-0.5">Price</p>
+                <div className="text-2xl font-bold text-primary">
+                  R{plan.price.toLocaleString()}
+                </div>
+             </div>
           </div>
 
-          <p className="text-2xl font-bold text-primary mb-4">
-            R{plan.price.toLocaleString()}
-          </p>
-
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Home className="w-4 h-4" />
-                <span>{plan.floorArea} m²</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Bed className="w-4 h-4" />
-                <span>{plan.bedrooms} Bedrooms</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Bath className="w-4 h-4" />
-                <span>{plan.bathrooms} Bathrooms</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Car className="w-4 h-4" />
-                <span>{plan.garage} Garage</span>
-              </div>
-            </div>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-4 gap-2 py-4 border-y border-border/40">
+             <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-secondary/30 text-center hover:bg-secondary/50 transition-colors">
+                <Square className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">{plan.floorArea}m²</span>
+                <span className="text-[10px] text-muted-foreground">Area</span>
+             </div>
+             <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-secondary/30 text-center hover:bg-secondary/50 transition-colors">
+                <Bed className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">{plan.bedrooms}</span>
+                <span className="text-[10px] text-muted-foreground">Beds</span>
+             </div>
+             <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-secondary/30 text-center hover:bg-secondary/50 transition-colors">
+                <Bath className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">{plan.bathrooms}</span>
+                <span className="text-[10px] text-muted-foreground">Baths</span>
+             </div>
+             <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-secondary/30 text-center hover:bg-secondary/50 transition-colors">
+                <Car className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">{plan.garage}</span>
+                <span className="text-[10px] text-muted-foreground">Garage</span>
+             </div>
+          </div>
+          
+          <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                {plan.width}m Width
+             </div>
+             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                {plan.depth}m Depth
+             </div>
           </div>
 
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-4 pb-4 border-b">
-            <span>{plan.levels} Level{plan.levels > 1 ? 's' : ''}</span>
-            <span>{plan.width}m × {plan.depth}m</span>
-          </div>
-
-          <div className="flex gap-3">
+          <div className="grid grid-cols-2 gap-3 pt-1">
             <Button 
-              className="flex-1" 
-              size="lg"
+              variant="outline"
+              className="w-full rounded-xl border-primary/20 hover:bg-primary/5 hover:text-primary font-semibold" 
               onClick={() => navigate(`/house-details/${plan.id}`)}
             >
-              View Details
+              Details
             </Button>
-            <Button 
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold" 
-              size="lg"
-              onClick={() => setShowBuyModal(true)}
-            >
-              Buy plan Online
-            </Button>
+            {plan.videoUrl ? (
+               <Button 
+                className="w-full rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 font-semibold gap-2"
+                onClick={() => setShowVideo(true)}
+               >
+                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                 Watch Video
+               </Button>
+            ) : (
+               <Button 
+                className="w-full rounded-xl font-semibold shadow-lg shadow-primary/25"
+                onClick={() => setShowBuyModal(true)}
+               >
+                 Buy Plan
+               </Button>
+            )}
           </div>
+          
+          {plan.videoUrl && (
+             <Button 
+              className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg shadow-green-600/20"
+              onClick={() => setShowBuyModal(true)}
+             >
+               Buy Plan Online
+             </Button>
+          )}
         </div>
-      </Card>
+      </div>
 
       {showVideo && plan.videoUrl && (
         <div 
@@ -335,105 +357,122 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
 
 
 
-      {/* Buy Plan Modal */}
+      {/* Buy Plan Modal - Yoco Style */}
       {showBuyModal && !showPaymentModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-white">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Purchase {plan.title}</h2>
-                <button
-                  onClick={() => setShowBuyModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X className="w-6 h-6" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <Card className="w-full max-w-lg border-2 border-primary/20 shadow-2xl animate-in zoom-in-95 max-h-[85vh] flex flex-col">
+             <div className="relative shrink-0 h-32 bg-primary/10 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-blue-600/20" />
+                <div className="absolute bottom-4 left-6">
+                   <h2 className="text-2xl font-bold">Purchase {plan.title}</h2>
+                   <p className="text-sm text-muted-foreground">{plan.bedrooms} BEDROOMS</p>
+                </div>
+                <button onClick={() => setShowBuyModal(false)} className="absolute top-4 right-4 p-2 bg-background/50 hover:bg-background rounded-full transition-colors">
+                   <X className="w-4 h-4" />
                 </button>
-              </div>
+             </div>
+             <CardContent className="p-6 space-y-6 overflow-y-auto">
+                <div className="flex justify-between items-center p-4 bg-muted/50 rounded-xl border border-border/50">
+                   <div>
+                      <p className="font-semibold">Plan Price</p>
+                   </div>
+                   <p className="text-xl font-bold text-primary">R{plan.price.toLocaleString()}</p>
+                </div>
+                
+                <div className="space-y-4">
+                   <h3 className="font-semibold border-b pb-2">Contact Information</h3>
+                   
+                   <div className="space-y-2">
+                      <Label>Your Name</Label>
+                      <Input 
+                            placeholder="Enter your full name" 
+                            value={contactInfo.name}
+                            onChange={(e) => setContactInfo({...contactInfo, name: e.target.value})}
+                      />
+                   </div>
 
-              <div className="space-y-4 mb-6">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Plan Price</p>
-                  <p className="text-3xl font-bold text-primary">R{plan.price.toLocaleString()}</p>
+                   <div className="space-y-2">
+                      <Label>Your Email</Label>
+                      <Input 
+                         type="email" 
+                         placeholder="Enter your email address" 
+                         value={contactInfo.email}
+                         onChange={(e) => setContactInfo({...contactInfo, email: e.target.value})}
+                      />
+                   </div>
+
+                   <div className="space-y-2">
+                      <Label>Your Phone</Label>
+                      <Input 
+                         placeholder="Enter your phone number" 
+                         value={contactInfo.phone}
+                         onChange={(e) => setContactInfo({...contactInfo, phone: e.target.value})}
+                      />
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                         <Label>Province</Label>
+                         <Input 
+                            placeholder="e.g. Gauteng" 
+                            value={contactInfo.province}
+                            onChange={(e) => setContactInfo({...contactInfo, province: e.target.value})}
+                         />
+                      </div>
+                      <div className="space-y-2">
+                         <Label>City</Label>
+                         <Input 
+                            placeholder="e.g. Johannesburg" 
+                            value={contactInfo.city}
+                            onChange={(e) => setContactInfo({...contactInfo, city: e.target.value})}
+                         />
+                      </div>
+                   </div>
+                   
+                   <div className="space-y-2">
+                      <Label>Pick-up Point</Label>
+                       <Input 
+                         placeholder="e.g. PostNet or Pep Store" 
+                         value={contactInfo.pickupPoint}
+                         onChange={(e) => setContactInfo({...contactInfo, pickupPoint: e.target.value})}
+                      />
+                   </div>
+
+                   <div className="space-y-2">
+                      <Label>Area / Mall</Label>
+                       <Input 
+                         placeholder="e.g. Sandton City" 
+                         value={contactInfo.areaMall}
+                         onChange={(e) => setContactInfo({...contactInfo, areaMall: e.target.value})}
+                      />
+                   </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <p className="text-sm text-muted-foreground mb-2">Contact Information</p>
-                  <input
-                    type="text"
-                    placeholder="Your Name"
-                    value={contactInfo.name}
-                    onChange={(e) => setContactInfo({ ...contactInfo, name: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
-                  />
-                  <input
-                    type="email"
-                    placeholder="Your Email"
-                    value={contactInfo.email}
-                    onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Your Phone"
-                    value={contactInfo.phone}
-                    onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Province"
-                    value={contactInfo.province}
-                    onChange={(e) => setContactInfo({ ...contactInfo, province: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
-                  />
-                  <input
-                    type="text"
-                    placeholder="City"
-                    value={contactInfo.city}
-                    onChange={(e) => setContactInfo({ ...contactInfo, city: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Pick-up Point"
-                    value={contactInfo.pickupPoint}
-                    onChange={(e) => setContactInfo({ ...contactInfo, pickupPoint: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Area / Mall"
-                    value={contactInfo.areaMall}
-                    onChange={(e) => setContactInfo({ ...contactInfo, areaMall: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg text-sm"
-                  />
+                <div className="flex gap-3 pt-2">
+                   <Button 
+                    size="lg"
+                    className="flex-1 text-base font-semibold" 
+                    onClick={() => {
+                        if (!contactInfo.name || !contactInfo.email || !contactInfo.phone) {
+                          alert('Please fill in all required fields');
+                          return;
+                        }
+                        setShowBuyModal(false);
+                        handleCheckoutPayment(plan);
+                    }}
+                   >
+                      Proceed to Payment <ArrowRight className="ml-2 w-4 h-4" />
+                   </Button>
+                   <Button 
+                    variant="outline"
+                    size="lg"
+                    className="flex-1 text-base"
+                    onClick={() => setShowBuyModal(false)}
+                   >
+                      Cancel
+                   </Button>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                <Button 
-                  className="w-full" 
-                  size="lg"
-                  onClick={() => {
-                    if (!contactInfo.name || !contactInfo.email || !contactInfo.phone) {
-                      alert('Please fill in all required fields');
-                      return;
-                    }
-                    setShowBuyModal(false);
-                    handleCheckoutPayment(plan);
-                  }}
-                >
-                  Proceed to Payment
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setShowBuyModal(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
+             </CardContent>
           </Card>
         </div>
       )}

@@ -1,388 +1,288 @@
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import CTASection from "@/components/CTASection";
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Award, Users, Heart, Lightbulb, CheckCircle, Building2, Home, Facebook, Twitter, Instagram } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { 
+  Award, 
+  Users, 
+  Heart, 
+  Lightbulb, 
+  CheckCircle, 
+  Building2, 
+  Target,
+  Rocket, 
+  ThumbsUp,
+  Globe,
+  Star
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import house1 from '@/assets/house1.jpg';
 import house2 from '@/assets/house2.jpg';
 import house3 from '@/assets/house3.jpg';
 import house4 from '@/assets/house4.jpg';
 
 const About = () => {
-  const team = [
-    {
-      name: 'John Cedric',
-      role: 'Founder & Lead Architect',
-      experience: '25+ years',
-      specialty: 'Modern & Contemporary Design',
-      image: '👨‍💼',
-    },
-    {
-      name: 'Sarah Mitchell',
-      role: 'Design Director',
-      experience: '18+ years',
-      specialty: 'Residential Architecture',
-      image: '👩‍💼',
-    },
-    {
-      name: 'Michael Chen',
-      role: 'Project Manager',
-      experience: '15+ years',
-      specialty: 'Project Coordination',
-      image: '👨‍💻',
-    },
-    {
-      name: 'Emma Rodriguez',
-      role: 'Interior Designer',
-      experience: '12+ years',
-      specialty: 'Space Planning',
-      image: '👩‍🎨',
-    },
-  ];
+    const navigate = useNavigate();
 
-  const certifications = [
-    { name: 'AIA Certified', icon: Award },
-    { name: 'LEED Accredited', icon: Award },
-    { name: 'Architecture Board Certified', icon: CheckCircle },
-    { name: 'ISO 9001:2015 Certified', icon: Award },
-  ];
+    const stats = [
+        { label: "Years Experience", value: "20+", icon: Award },
+        { label: "Projects Completed", value: "500+", icon: Building2 },
+        { label: "Happy Clients", value: "98%", icon: ThumbsUp },
+        { label: "Cities Covered", value: "15+", icon: Globe },
+    ];
 
-  const portfolioItems = [
-    { image: house1, title: 'Modern Riverside Estate', year: '2024' },
-    { image: house2, title: 'Traditional Farmhouse', year: '2023' },
-    { image: house3, title: 'Mediterranean Villa', year: '2023' },
-    { image: house4, title: 'Contemporary Urban Home', year: '2024' },
-  ];
+    const values = [
+        {
+            icon: Heart,
+            title: 'Client-Centric',
+            description: 'We listen deeply and design around your life, ensuring every corner reflects your unique story.',
+            color: 'text-rose-500',
+            bg: 'bg-rose-500/10'
+        },
+        {
+            icon: Lightbulb,
+            title: 'Innovative Design',
+            description: 'Pushing boundaries with modern aesthetics, smart home integration, and sustainable practices.',
+            color: 'text-amber-500',
+            bg: 'bg-amber-500/10'
+        },
+        {
+            icon: Target,
+            title: 'Precision & Quality',
+            description: 'Meticulous attention to detail in every blueprint, ensuring perfection from concept to construction.',
+            color: 'text-blue-500',
+            bg: 'bg-blue-500/10'
+        },
+        {
+            icon: Users,
+            title: 'Collaborative Spirit',
+            description: 'Building strong partnerships with engineers, contractors, and you for seamless execution.',
+            color: 'text-emerald-500',
+            bg: 'bg-emerald-500/10'
+        },
+    ];
 
-  const values = [
-    {
-      icon: Heart,
-      title: 'Client-Focused',
-      description: 'We listen to our clients and bring their vision to life with precision and care.',
-    },
-    {
-      icon: Lightbulb,
-      title: 'Innovation',
-      description: 'We stay at the forefront of architectural trends and sustainable design practices.',
-    },
-    {
-      icon: Building2,
-      title: 'Quality',
-      description: 'We commit to the highest standards in design, materials, and craftsmanship.',
-    },
-    {
-      icon: Users,
-      title: 'Collaboration',
-      description: 'We work closely with contractors, engineers, and clients to ensure success.',
-    },
-  ];
+    const team = [
+        {
+            name: 'John Cedric',
+            role: 'Principal Architect',
+            bio: 'With over 25 years of experience, John leads the vision of creating homes that inspire and endure.',
+            // Black Male
+            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800',
+        },
+        {
+            name: 'Sarah Mitchell',
+            role: 'Design Director',
+            bio: 'An award-winning designer passionate about sustainable and biophilic residential architecture.',
+            // White Female
+            image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=800',
+        },
+        {
+            name: 'Michael Ross',
+            role: 'Head of Engineering',
+            bio: 'Expert in structural integrity and modern construction methodologies.',
+            // White Male
+            image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800',
+        },
+        {
+            name: 'Emma Rodriguez',
+            role: 'Interior Specialist',
+            bio: 'Transforming spaces into comfortable, functional, and aesthetically stunning environments.',
+            // Black Female
+            image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=800',
+        },
+    ];
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-background font-sans">
       <Header />
-      <div className="min-h-screen bg-background">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-primary to-primary/80 text-white py-20">
-          <div className="container mx-auto px-4">
-            <h1 className="text-5xl font-bold mb-4">About Cedric House Designs</h1>
-            <p className="text-xl text-white/90 max-w-2xl">
-              Crafting exceptional homes and dreams for over two decades.
-            </p>
-          </div>
-        </div>
+      
+      <main className="flex-grow">
+        {/* Modern Hero Section */}
+        <section className="relative h-[65vh] min-h-[550px] flex items-center justify-center overflow-hidden">
+             <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-slate-900/40 z-10" />
+                <img 
+                  src={house3} 
+                  alt="About Cedric House Designs" 
+                  className="w-full h-full object-cover object-center scale-105 animate-slow-zoom"
+                />
+             </div>
+             
+             <div className="container relative z-20 px-4 pt-20">
+               <div className="max-w-4xl space-y-8 animate-fade-up">
+                 <Badge variant="outline" className="px-4 py-1.5 border-white/20 bg-white/10 text-white backdrop-blur-md rounded-full text-sm font-medium tracking-wide">
+                   About Our Firm
+                 </Badge>
+                 <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white leading-[1.1]">
+                   Crafting Legacies, <br/>
+                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-400">
+                     One Home at a Time.
+                   </span>
+                 </h1>
+                 <p className="text-xl md:text-2xl text-slate-200 max-w-2xl leading-relaxed font-light">
+                   We are a team of visionary architects and designers dedicated to redefining residential living 
+                   through innovation, elegance, and unwavering quality.
+                 </p>
+               </div>
+             </div>
+        </section>
 
-        {/* Who We Are Section */}
-        <div className="py-20 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <h2 className="text-4xl font-bold text-foreground">Who We Are</h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Cedric House Designs is a leading architectural firm specializing in residential home design and planning. 
-                  With over two decades of experience, we've built a reputation for creating beautiful, functional, and 
-                  sustainable homes that exceed our clients' expectations.
-                </p>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Our team of certified architects, designers, and project managers work collaboratively to transform 
-                  your vision into reality. We pride ourselves on understanding our clients' needs and delivering 
-                  exceptional designs that stand the test of time.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <img src={house1} alt="Our Work" className="rounded-lg shadow-lg" />
-                <img src={house2} alt="Our Work" className="rounded-lg shadow-lg" />
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Stats Section */}
+        <section className="py-12 border-b bg-card relative z-30 -mt-10 mx-4 md:mx-auto max-w-6xl rounded-2xl shadow-xl">
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 px-8">
+                {stats.map((stat, index) => {
+                    const Icon = stat.icon;
+                    return (
+                        <div key={index} className="flex flex-col items-center text-center space-y-2">
+                             <div className="p-3 rounded-full bg-primary/10 text-primary mb-2">
+                                <Icon className="w-6 h-6" />
+                             </div>
+                             <span className="text-3xl md:text-4xl font-bold text-foreground">{stat.value}</span>
+                             <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</span>
+                        </div>
+                    )
+                })}
+             </div>
+        </section>
 
-        {/* Mission Section */}
-        <div className="py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold text-foreground mb-8 text-center">Our Mission</h2>
-            <div className="max-w-4xl mx-auto space-y-6">
-              <Card className="p-8 border-l-4 border-l-primary">
-                <p className="text-xl text-muted-foreground leading-relaxed">
-                  To design and deliver exceptional residential homes that combine aesthetic beauty, functional excellence, 
-                  and sustainable practices. We are committed to understanding our clients' unique vision and transforming it 
-                  into a home that brings joy, comfort, and lasting value.
-                </p>
-              </Card>
-            </div>
-          </div>
-        </div>
-
-        {/* Our Values Section */}
-        <div className="py-20 bg-background">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold text-foreground mb-12 text-center">Our Core Values</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {values.map((value, index) => {
-                const Icon = value.icon;
-                return (
-                  <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
-                    <div className="flex flex-col items-center text-center space-y-4">
-                      <div className="p-3 bg-primary/10 rounded-full">
-                        <Icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-foreground">{value.title}</h3>
-                      <p className="text-muted-foreground">{value.description}</p>
+        {/* Introduction / Our Story */}
+        <section className="py-24 bg-background">
+            <div className="container px-4">
+                <div className="grid lg:grid-cols-2 gap-16 items-center">
+                    <div className="space-y-8 animate-fade-in">
+                        <h2 className="text-sm font-bold text-primary tracking-widest uppercase">Our Story</h2>
+                        <h3 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
+                            More Than Just <br/> Blueprints.
+                        </h3>
+                        <p className="text-lg text-muted-foreground leading-relaxed">
+                            Founded over 20 years ago, Cedric House Designs began with a simple belief: 
+                            <span className="text-foreground font-semibold"> a home should be the perfect backdrop for life's best moments.</span>
+                        </p>
+                        <p className="text-lg text-muted-foreground leading-relaxed">
+                            From humble beginnings, we have grown into one of the region's most respected architectural firms. 
+                            Our journey is defined by a relentless pursuit of design excellence and a deep commitment to our clients. 
+                            We don't just designing structures; we engineer lifestyles, curate comfort, and build the future.
+                        </p>
+                        <div className="pt-4">
+                             <Button onClick={() => navigate('/contact')} size="lg" className="rounded-full px-8">
+                                Work With Us
+                             </Button>
+                        </div>
                     </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Architectural Background Section */}
-        <div className="py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold text-foreground mb-8">Architectural Background</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      <CheckCircle className="h-6 w-6 text-primary" />
+                    
+                    <div className="relative">
+                        <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 to-transparent rounded-3xl blur-2xl opacity-70" />
+                        <div className="relative grid grid-cols-2 gap-4">
+                            <img src={house1} alt="Classic Design" className="rounded-2xl shadow-lg object-cover h-64 w-full translate-y-8" />
+                            <img src={house2} alt="Modern Architecture" className="rounded-2xl shadow-lg object-cover h-64 w-full -translate-y-8" />
+                        </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Modern Design Expertise</h3>
-                      <p className="text-muted-foreground">Specializing in contemporary and modern residential architecture</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      <CheckCircle className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Sustainable Design</h3>
-                      <p className="text-muted-foreground">LEED accredited and committed to eco-friendly practices</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      <CheckCircle className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Classic to Contemporary</h3>
-                      <p className="text-muted-foreground">Experience across all architectural styles and periods</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      <CheckCircle className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Smart Home Integration</h3>
-                      <p className="text-muted-foreground">Cutting-edge technology seamlessly integrated into designs</p>
-                    </div>
-                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <img src={house3} alt="Design Work" className="rounded-lg shadow-lg" />
-                <img src={house4} alt="Design Work" className="rounded-lg shadow-lg" />
-              </div>
             </div>
-          </div>
-        </div>
+        </section>
 
-        {/* Why Clients Trust Us Section */}
-        <div className="py-20 bg-background">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold text-foreground mb-12 text-center">Why Clients Trust Us</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card className="p-8">
-                <h3 className="text-2xl font-bold text-primary mb-4">20+ Years</h3>
-                <p className="text-muted-foreground">
-                  Over two decades of proven experience in residential architecture and design excellence.
-                </p>
-              </Card>
-              <Card className="p-8">
-                <h3 className="text-2xl font-bold text-primary mb-4">500+ Projects</h3>
-                <p className="text-muted-foreground">
-                  Successfully completed over 500 residential projects with 98% client satisfaction rate.
-                </p>
-              </Card>
-              <Card className="p-8">
-                <h3 className="text-2xl font-bold text-primary mb-4">Award Winning</h3>
-                <p className="text-muted-foreground">
-                  Multiple awards for design excellence, innovation, and sustainable architecture.
-                </p>
-              </Card>
-              <Card className="p-8">
-                <h3 className="text-2xl font-bold text-primary mb-4">Transparent Process</h3>
-                <p className="text-muted-foreground">
-                  Clear communication, detailed timelines, and regular updates throughout every project.
-                </p>
-              </Card>
-              <Card className="p-8">
-                <h3 className="text-2xl font-bold text-primary mb-4">Expert Team</h3>
-                <p className="text-muted-foreground">
-                  Dedicated team of certified architects, designers, and project management professionals.
-                </p>
-              </Card>
-              <Card className="p-8">
-                <h3 className="text-2xl font-bold text-primary mb-4">Client Support</h3>
-                <p className="text-muted-foreground">
-                  Ongoing support and maintenance guidance even after project completion.
-                </p>
-              </Card>
-            </div>
-          </div>
-        </div>
+        {/* Mission & Vision */}
+        <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')]"></div>
+             <div className="container relative z-10 px-4">
+                 <div className="text-center max-w-3xl mx-auto mb-16">
+                     <Rocket className="w-12 h-12 text-blue-400 mx-auto mb-6" />
+                     <h2 className="text-4xl font-bold mb-6">Our Mission & Vision</h2>
+                     <p className="text-xl text-slate-300">
+                         To continuously raise the standard of residential architecture, making world-class design accessible, sustainable, and deeply personal.
+                     </p>
+                 </div>
 
-        {/* Certifications Section */}
-        <div className="py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold text-foreground mb-12 text-center">Certifications & Experience</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {certifications.map((cert, index) => {
-                const Icon = cert.icon;
-                return (
-                  <Card key={index} className="p-6 text-center hover:shadow-lg transition-shadow">
-                    <div className="flex justify-center mb-4">
-                      <div className="p-3 bg-primary/10 rounded-full">
-                        <Icon className="h-8 w-8 text-primary" />
-                      </div>
-                    </div>
-                    <Badge className="mb-4">{cert.name}</Badge>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+                 <div className="grid md:grid-cols-3 gap-8 text-center md:text-left">
+                     <div className="p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                         <h3 className="text-2xl font-bold text-blue-300 mb-4">Innovation First</h3>
+                         <p className="text-slate-400">Leveraging the latest in 3D visualization, VR, and sustainable materials to create homes for the future.</p>
+                     </div>
+                     <div className="p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                         <h3 className="text-2xl font-bold text-purple-300 mb-4">Sustainable Living</h3>
+                         <p className="text-slate-400">Designing energy-efficient homes that respect the environment while reducing long-term costs for owners.</p>
+                     </div>
+                     <div className="p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                         <h3 className="text-2xl font-bold text-emerald-300 mb-4">Enduring Quality</h3>
+                         <p className="text-slate-400">Partnerships with top-tier engineers and builders to ensure every structure stands the test of time.</p>
+                     </div>
+                 </div>
+             </div>
+        </section>
 
-        {/* Portfolio Showcase */}
-        <div className="py-20 bg-background">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold text-foreground mb-12 text-center">Recent Portfolio Highlights</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {portfolioItems.map((item, index) => (
-                <div key={index} className="group cursor-pointer">
-                  <div className="relative overflow-hidden rounded-lg mb-4">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-64 object-cover transition-transform group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                      <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">
-                        View Project
-                      </span>
-                    </div>
-                  </div>
-                  <h3 className="font-semibold text-foreground">{item.title}</h3>
-                  <p className="text-muted-foreground text-sm">{item.year}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Core Values */}
+        <section className="py-24 bg-muted/30">
+             <div className="container px-4">
+                 <div className="text-center max-w-3xl mx-auto mb-16">
+                     <h2 className="text-4xl font-bold text-foreground mb-4">Our Core Values</h2>
+                     <p className="text-lg text-muted-foreground">The principles that guide every line we draw and every decision we make.</p>
+                 </div>
+
+                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                     {values.map((val, i) => {
+                         const Icon = val.icon;
+                         return (
+                             <Card key={i} className="p-8 border-none shadow-md hover:shadow-xl transition-all duration-300 group">
+                                 <div className={`w-14 h-14 rounded-2xl ${val.bg} ${val.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                                     <Icon className="w-7 h-7" />
+                                 </div>
+                                 <h3 className="text-xl font-bold text-foreground mb-3">{val.title}</h3>
+                                 <p className="text-muted-foreground leading-relaxed text-sm">
+                                     {val.description}
+                                 </p>
+                             </Card>
+                         )
+                     })}
+                 </div>
+             </div>
+        </section>
 
         {/* Team Section */}
-        <div className="py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold text-foreground mb-12 text-center">Our Expert Team</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {team.map((member, index) => (
-                <Card key={index} className="p-6 text-center hover:shadow-lg transition-shadow">
-                  <div className="text-4xl mb-4">{member.image}</div>
-                  <h3 className="font-semibold text-lg text-foreground mb-1">{member.name}</h3>
-                  <p className="text-primary font-medium text-sm mb-2">{member.role}</p>
-                  <p className="text-muted-foreground text-sm mb-3">{member.experience}</p>
-                  <Badge variant="secondary" className="text-xs">{member.specialty}</Badge>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
+        <section className="py-24 bg-background">
+             <div className="container px-4">
+                <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                    <div>
+                         <h2 className="text-sm font-bold text-primary tracking-widest uppercase mb-2">Leadership</h2>
+                         <h3 className="text-4xl font-bold text-foreground">Meet The Minds</h3>
+                    </div>
+                    <Button variant="outline" className="hidden md:flex">View All Team Members</Button>
+                </div>
 
-        {/* CTA Section */}
-        <footer className="bg-primary text-primary-foreground py-16">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Home className="h-6 w-6 text-primary-foreground" />
-                  <span className="text-lg font-bold text-primary-foreground">Cedric House Planning</span>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                     {team.map((member, index) => (
+                         <div key={index} className="group relative">
+                             <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-muted mb-4 relative group-hover:shadow-lg transition-all duration-300">
+                                  <img 
+                                    src={member.image} 
+                                    alt={member.name} 
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                  />
+                                  
+                                  {/* Social Overlay */}
+                                  <div className="absolute inset-0 bg-primary/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
+                                       <span className="text-white font-medium cursor-pointer hover:underline">LinkedIn</span>
+                                       <span className="text-white font-medium cursor-pointer hover:underline">Twitter</span>
+                                  </div>
+                             </div>
+                             <h4 className="text-xl font-bold text-foreground">{member.name}</h4>
+                             <p className="text-primary font-medium text-sm mb-2">{member.role}</p>
+                             <p className="text-muted-foreground text-sm leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
+                                 {member.bio}
+                             </p>
+                         </div>
+                     ))}
                 </div>
-                <p className="text-sm">
-                  Creating beautiful, functional house plans for your dream home.
-                </p>
-                <div className="flex gap-4">
-                  <a href="#" className="hover:text-primary-foreground transition-colors">
-                    <Facebook className="h-5 w-5" />
-                  </a>
-                  <a href="#" className="hover:text-primary-foreground transition-colors">
-                    <Twitter className="h-5 w-5" />
-                  </a>
-                  <a href="#" className="hover:text-primary-foreground transition-colors">
-                    <Instagram className="h-5 w-5" />
-                  </a>
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-primary-foreground mb-4">House Plans</h3>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Modern Plans</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Traditional Plans</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Small House Plans</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Luxury Plans</a></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-primary-foreground mb-4">Services</h3>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Custom Design</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Plan Modifications</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Construction Support</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Cost Estimates</a></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-primary-foreground mb-4">Support</h3>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Contact Us</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">FAQ</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Shipping Info</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Returns</a></li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="pt-8 border-t border-primary-foreground/20 text-center text-sm">
-              <p className="mb-2">© 2024 Cedric House Planning and Construction. All rights reserved.</p>
-              <p className="text-xs">Website Developers: <a href="#" className="text-red-400 hover:text-red-300 transition-opacity">TAD Developers</a></p>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </>
+             </div>
+        </section>
+
+        <CTASection />
+      </main>
+
+      <Footer />
+    </div>
   );
 };
 

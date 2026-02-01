@@ -15,6 +15,7 @@ interface HousePlanCardProps {
   videoUrl?: string;
 }
 
+
 const HousePlanCard = ({ 
   image, 
   title, 
@@ -28,27 +29,30 @@ const HousePlanCard = ({
   const [showVideo, setShowVideo] = useState(false);
   return (
     <>
-      <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in">
-        <div className="relative overflow-hidden">
+      <div className="group relative bg-card rounded-3xl overflow-hidden border border-border/50 hover:border-primary/20 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-shadow duration-500">
+        <div className="relative aspect-[4/3] overflow-hidden">
           {isBestseller && (
-            <Badge className="absolute top-4 right-4 z-10 bg-primary">
+            <Badge className="absolute top-4 right-4 z-10 bg-primary/90 backdrop-blur-md text-white border-0 shadow-lg font-medium px-3 py-1">
               Bestseller
             </Badge>
           )}
           <img 
             src={image} 
             alt={title} 
-            className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
           />
-          <button className="absolute top-4 left-4 bg-card/90 backdrop-blur-sm p-2 rounded-full hover:bg-card transition-colors">
-            <Heart className="h-5 w-5 text-foreground hover:text-primary hover:fill-primary transition-colors" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          <button className="absolute top-4 left-4 bg-white/20 backdrop-blur-md p-2.5 rounded-full hover:bg-white/40 transition-all border border-white/20 text-white">
+            <Heart className="h-5 w-5 hover:fill-red-500 hover:text-red-500 transition-colors" />
           </button>
+          
           {videoUrl && (
             <button 
               onClick={() => setShowVideo(true)}
-              className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/50"
+              className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
             >
-              <div className="bg-orange-500 hover:bg-orange-600 p-4 rounded-full transition-colors">
+              <div className="bg-white/20 backdrop-blur-md p-4 rounded-full border border-white/30 hover:scale-110 transition-transform">
                 <Play className="h-8 w-8 text-white fill-white" />
               </div>
             </button>
@@ -56,29 +60,39 @@ const HousePlanCard = ({
         </div>
         
         <div className="p-6 space-y-4">
-          <h3 className="text-xl font-bold text-foreground">{title}</h3>
+          <div className="space-y-1">
+             <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">{title}</h3>
+             <p className="text-sm text-muted-foreground font-medium">Modern Family Home</p>
+          </div>
           
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Bed className="h-4 w-4" />
-              <span>{beds} Beds</span>
+          <div className="grid grid-cols-3 gap-2 py-4 border-y border-border/40">
+            <div className="flex flex-col items-center justify-center gap-1 text-center p-2 rounded-lg bg-secondary/30">
+              <Bed className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold text-foreground">{beds} Beds</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Bath className="h-4 w-4" />
-              <span>{baths} Baths</span>
+            <div className="flex flex-col items-center justify-center gap-1 text-center p-2 rounded-lg bg-secondary/30">
+              <Bath className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold text-foreground">{baths} Baths</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Square className="h-4 w-4" />
-              <span>{sqft} sq ft</span>
+            <div className="flex flex-col items-center justify-center gap-1 text-center p-2 rounded-lg bg-secondary/30">
+              <Square className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold text-foreground">{sqft} sq ft</span>
             </div>
           </div>
           
-          <div className="flex items-center justify-between pt-4 border-t border-border">
-            <span className="text-2xl font-bold text-primary">${price}</span>
-            <Button>View Plan</Button>
+          <div className="flex items-center justify-between pt-2">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Starting at</p>
+              <span className="text-2xl font-bold text-foreground">
+                R{typeof price === 'string' && !isNaN(Number(price)) ? Number(price).toLocaleString() : price}
+              </span>
+            </div>
+            <Button className="rounded-xl px-6 font-semibold shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all">
+              View Plan
+            </Button>
           </div>
         </div>
-      </Card>
+      </div>
 
       {showVideo && videoUrl && (
         <div 
