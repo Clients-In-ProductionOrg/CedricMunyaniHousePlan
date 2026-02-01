@@ -49,7 +49,7 @@ const loadYocoSdk = () => {
 
   window.__yocoSdkPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = 'https://js.yoco.com/sdk/v2/yoco-sdk-web.js';
+    script.src = 'https://js.yoco.com/sdk/v1/yoco-sdk-web.js?v=2';
     script.async = true;
     script.onload = () => resolve(window.YocoSDK);
     script.onerror = () => reject(new Error('Failed to load Yoco SDK'));
