@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { API_ENDPOINTS } from '@/config/constants';
+import { API_ENDPOINTS, BACKEND_URL } from '@/config/constants';
 import {
   Select,
   SelectContent,
@@ -101,7 +101,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
   useEffect(() => {
     const fetchYocoKey = async () => {
       try {
-        const response = await fetch(`${API_ENDPOINTS.BACKEND_URL}/api/yoco-public-key/`);
+        const response = await fetch(`${BACKEND_URL}/api/yoco-public-key/`);
         const data = await response.json();
         setYocoPublicKey(data.public_key);
       } catch (error) {
@@ -161,7 +161,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
             alert('Payment failed: ' + result.error.message);
           } else {
             // Payment successful - send token to backend
-            const verifyResponse = await fetch(`${API_ENDPOINTS.BACKEND_URL}/api/process-payment/`, {
+            const verifyResponse = await fetch(`${BACKEND_URL}/api/process-payment/`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
