@@ -1,4 +1,5 @@
 import { Home, Facebook, Twitter, Instagram } from "lucide-react";
+import { ADMIN_URL } from "@/config/constants";
 
 const Footer = () => {
   return (
@@ -59,7 +60,13 @@ const Footer = () => {
         
         <div className="pt-8 border-t border-border/20 text-center text-sm">
           <p className="mb-2">© 2024 Cedric House Planning and Construction. All rights reserved.</p>
-          <p className="text-xs">Website Developers: <a href="#" className="text-red-600 hover:text-red-700 hover:underline">TAD Developers</a></p>
+          <p className="text-xs mb-2">Website Developers: <a href="#" className="text-red-600 hover:text-red-700 hover:underline">TAD Developers</a></p>
+          <a
+            href={ADMIN_URL}
+            className="text-xs text-primary hover:text-primary/80 hover:underline"
+          >
+            Admin Site
+          </a>
         </div>
       </div>
     </footer>

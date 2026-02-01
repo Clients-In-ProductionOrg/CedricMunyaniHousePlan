@@ -1,12 +1,41 @@
-import { Search, Star, MessageSquareText, ShieldCheck } from "lucide-react";
+import { Search, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-const HeroSection = () => {
-  const videoId = "lnpsR1M29W0";
-  // Autoplay, Mute, Loop, No Controls, No Info, No Related (limit), Dark theme
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`;
+type HeroSectionProps = {
+  homeVideoUrl?: string;
+};
+
+const DEFAULT_VIDEO_ID = "lnpsR1M29W0";
+
+const getYouTubeEmbedUrl = (url?: string) => {
+  if (!url) {
+    return `https://www.youtube.com/embed/${DEFAULT_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${DEFAULT_VIDEO_ID}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`;
+  }
+
+  if (url.includes("youtube.com/embed/")) {
+    const base = url.split("?")[0];
+    const videoId = base.split("/embed/")[1] || DEFAULT_VIDEO_ID;
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`;
+  }
+
+  let videoId = "";
+  if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1]?.split("?")[0] || "";
+  } else if (url.includes("watch?v=")) {
+    videoId = url.split("watch?v=")[1]?.split("&")[0] || "";
+  } else if (url.includes("youtube.com/watch")) {
+    const urlParams = new URLSearchParams(url.split("?")[1]);
+    videoId = urlParams.get("v") || "";
+  }
+
+  const resolvedId = videoId || DEFAULT_VIDEO_ID;
+  return `https://www.youtube.com/embed/${resolvedId}?autoplay=1&mute=1&loop=1&playlist=${resolvedId}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`;
+};
+
+const HeroSection = ({ homeVideoUrl }: HeroSectionProps) => {
+  const embedUrl = getYouTubeEmbedUrl(homeVideoUrl);
 
   return (
     <section className="relative min-h-[90vh] flex items-center pt-20 pb-32 overflow-hidden bg-background">
@@ -95,24 +124,10 @@ const HeroSection = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent z-10 pointer-events-none" />
 
                   {/* Floating Elements on top of Video */}
-                  <div className="absolute bottom-6 left-6 right-6 z-20 flex items-center justify-between gap-4">
-                     <div className="bg-white/90 dark:bg-black/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white/20 flex-1 transform transition-transform hover:scale-105">
-                        <div className="flex items-start gap-3">
-                           <div className="p-2.5 bg-green-500/10 rounded-full shrink-0">
-                              <ShieldCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
-                           </div>
-                           <div>
-                              <p className="font-bold text-sm leading-none mb-1">Approved Design</p>
-                              <p className="text-[10px] text-muted-foreground leading-snug">
-                                 SANS 10400 Compliant &<br/>Municipality Ready
-                              </p>
-                           </div>
-                        </div>
-                     </div>
-
-                     <div className="hidden sm:flex bg-white/90 dark:bg-black/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/20 items-center justify-center w-12 h-12 shrink-0 animate-pulse">
-                        <div className="w-3 h-3 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]" />
-                     </div>
+                  <div className="absolute bottom-6 right-6 z-20">
+                    <div className="hidden sm:flex bg-white/90 dark:bg-black/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/20 items-center justify-center w-12 h-12 shrink-0 animate-pulse">
+                      <div className="w-3 h-3 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]" />
+                    </div>
                   </div>
               </div>
 

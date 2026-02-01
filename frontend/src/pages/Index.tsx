@@ -13,6 +13,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [popularPlans, setPopularPlans] = useState<any[]>([]);
   const [bestSellingPlans, setBestSellingPlans] = useState<any[]>([]);
+  const [homeVideoUrl, setHomeVideoUrl] = useState<string>("");
 
   // Fetch site settings and house plans from backend
   useEffect(() => {
@@ -21,6 +22,11 @@ const Index = () => {
         // Fetch all house plans
         const plansResponse = await fetch(API_ENDPOINTS.PLANS);
         const plansData = await plansResponse.json();
+
+        // Fetch site settings for homepage video URL
+        const settingsResponse = await fetch(API_ENDPOINTS.SITE_SETTINGS);
+        const settingsData = settingsResponse.ok ? await settingsResponse.json() : null;
+        setHomeVideoUrl(settingsData?.home_video_url || "");
 
         // Filter and transform popular plans
         const popular = plansData
@@ -110,7 +116,7 @@ const Index = () => {
 
       <main>
         {/* HERO SECTION */}
-        <HeroSection />
+        <HeroSection homeVideoUrl={homeVideoUrl} />
 
         {/* POPULAR PLANS SECTION */}
         <section id="plans" className="py-24 bg-background relative">
