@@ -214,8 +214,8 @@ const Index = () => {
             };
           });
 
-        setPopularPlans(popular);
-        setBestSellingPlans(bestSelling);
+        setPopularPlans(popular.slice(0, 6));
+        setBestSellingPlans(bestSelling.slice(0, 8));
         setLoading(false);
       } catch (error) {
         console.log("Data fetch info:", error);
@@ -387,7 +387,7 @@ const Index = () => {
               </p>
             </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {loading ? (
                 <p className="col-span-full text-center text-muted-foreground py-12">Loading popular plans...</p>
               ) : popularPlans.length > 0 ? (
@@ -411,7 +411,7 @@ const Index = () => {
               </p>
             </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {loading ? (
                 <p className="col-span-full text-center text-muted-foreground py-12">Loading best-selling plans...</p>
               ) : bestSellingPlans.length > 0 ? (
