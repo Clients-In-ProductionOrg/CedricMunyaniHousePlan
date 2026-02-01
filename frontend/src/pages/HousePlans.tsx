@@ -36,6 +36,29 @@ import { ImageGallery } from '@/components/ImageGallery';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import Header from '@/components/Header';
 
+declare global {
+  interface Window {
+    YocoSDK?: any;
+    __yocoSdkPromise?: Promise<any>;
+  }
+}
+
+const loadYocoSdk = () => {
+  if (window.YocoSDK) return Promise.resolve(window.YocoSDK);
+  if (window.__yocoSdkPromise) return window.__yocoSdkPromise;
+
+  window.__yocoSdkPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://js.yoco.com/sdk/v2/yoco-sdk-web.js';
+    script.async = true;
+    script.onload = () => resolve(window.YocoSDK);
+    script.onerror = () => reject(new Error('Failed to load Yoco SDK'));
+    document.body.appendChild(script);
+  });
+
+  return window.__yocoSdkPromise;
+};
+
 // Helper function to convert YouTube URLs to embed format
 function convertYoutubeUrl(url: string): string {
   if (!url) return '';
@@ -114,7 +137,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
   // Payment handler using Yoco v2 showPopup API
   const handleYocoPayment = async (plan: HousePlan) => {
     try {
-      const YocoSDK = (window as any).YocoSDK;
+      const YocoSDK = await loadYocoSdk();
       if (!YocoSDK) {
         alert('Payment SDK not loaded. Please refresh the page.');
         return;
