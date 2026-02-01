@@ -36,29 +36,6 @@ import { ImageGallery } from '@/components/ImageGallery';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import Header from '@/components/Header';
 
-declare global {
-  interface Window {
-    YocoSDK?: any;
-    __yocoSdkPromise?: Promise<any>;
-  }
-}
-
-const loadYocoSdk = () => {
-  if (window.YocoSDK) return Promise.resolve(window.YocoSDK);
-  if (window.__yocoSdkPromise) return window.__yocoSdkPromise;
-
-  window.__yocoSdkPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://js.yoco.com/sdk/v1/yoco-sdk-web.js?v=2';
-    script.async = true;
-    script.onload = () => resolve(window.YocoSDK);
-    script.onerror = () => reject(new Error('Failed to load Yoco SDK'));
-    document.body.appendChild(script);
-  });
-
-  return window.__yocoSdkPromise;
-};
-
 // Helper function to convert YouTube URLs to embed format
 function convertYoutubeUrl(url: string): string {
   if (!url) return '';
@@ -116,33 +93,10 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
     expiryDate: '', 
     cvv: '' 
   });
-  const [purchaseId, setPurchaseId] = useState<number | null>(null);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [yocoPublicKey, setYocoPublicKey] = useState('');
 
-  // Fetch Yoco public key on component mount
-  useEffect(() => {
-    const fetchYocoKey = async () => {
-      try {
-        const response = await fetch(`${BACKEND_URL}/api/yoco-public-key/`);
-        const data = await response.json();
-        setYocoPublicKey(data.public_key);
-      } catch (error) {
-        console.error('Error fetching Yoco public key:', error);
-      }
-    };
-    fetchYocoKey();
-  }, []);
-
-  // Payment handler using Yoco v2 showPopup API
-  const handleYocoPayment = async (plan: HousePlan) => {
+  // Payment handler using Yoco Checkout API
+  const handleCheckoutPayment = async (plan: HousePlan) => {
     try {
-      const YocoSDK = await loadYocoSdk();
-      if (!YocoSDK) {
-        alert('Payment SDK not loaded. Please refresh the page.');
-        return;
-      }
-
       // First, save the purchase to database
       const purchaseResponse = await fetch(API_ENDPOINTS.PURCHASES, {
         method: 'POST',
@@ -167,45 +121,30 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
         return;
       }
 
-      // Initialize Yoco v2 with correct API
-      const yoco = new YocoSDK({
-        publicKey: yocoPublicKey,
+      const origin = window.location.origin;
+      const successUrl = `${origin}/house-plans?checkout=success&purchase_id=${purchaseData.id}`;
+      const cancelUrl = `${origin}/house-plans?checkout=cancel&purchase_id=${purchaseData.id}`;
+      const failureUrl = `${origin}/house-plans?checkout=failure&purchase_id=${purchaseData.id}`;
+
+      const checkoutResponse = await fetch(`${BACKEND_URL}/api/create-checkout/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          purchase_id: purchaseData.id,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          failure_url: failureUrl,
+        })
       });
 
-      // Show payment popup (v2 correct method)
-      yoco.showPopup({
-        amountInCents: Math.round(plan.price * 100), // Convert to cents
-        currency: 'ZAR',
-        name: 'House Plan Purchase',
-        description: plan.title,
-        callback: async (result: any) => {
-          if (result.error) {
-            console.error('Payment failed:', result.error);
-            alert('Payment failed: ' + result.error.message);
-          } else {
-            // Payment successful - send token to backend
-            const verifyResponse = await fetch(`${BACKEND_URL}/api/process-payment/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                purchase_id: purchaseData.id,
-                token: result.id, // Yoco token
-              })
-            });
-
-            const verifyData = await verifyResponse.json();
-            if (verifyData.success) {
-              setShowSuccessModal(true);
-              // Reset form
-              setContactInfo({ name: '', email: '', phone: '', province: '', city: '', pickupPoint: '', areaMall: '' });
-            } else {
-              alert('Payment verification failed: ' + verifyData.error);
-            }
-          }
-        }
-      });
+      const checkoutData = await checkoutResponse.json();
+      if (checkoutData.success && checkoutData.redirect_url) {
+        window.location.href = checkoutData.redirect_url;
+      } else {
+        alert('Payment initialization failed. Please try again.');
+      }
     } catch (error) {
       console.error('Payment error:', error);
       alert('Payment processing error. Please try again.');
@@ -481,7 +420,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                       return;
                     }
                     setShowBuyModal(false);
-                    handleYocoPayment(plan);
+                    handleCheckoutPayment(plan);
                   }}
                 >
                   Proceed to Payment

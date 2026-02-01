@@ -157,6 +157,71 @@ def get_yoco_public_key(request):
 
 
 @api_view(['POST'])
+def create_checkout(request):
+    """Create a Yoco Checkout session and return redirect URL"""
+    try:
+        data = request.data
+        purchase_id = data.get('purchase_id')
+        success_url = data.get('success_url')
+        cancel_url = data.get('cancel_url')
+        failure_url = data.get('failure_url')
+
+        purchase = Purchase.objects.get(pk=purchase_id)
+
+        yoco_url = 'https://payments.yoco.com/api/checkouts'
+        headers = {
+            'Authorization': f'Bearer {settings.YOCO_SECRET_KEY}',
+            'Content-Type': 'application/json'
+        }
+
+        amount_cents = int(float(purchase.plan_price) * 100)
+
+        payload = {
+            'amount': amount_cents,
+            'currency': 'ZAR',
+            'successUrl': success_url,
+            'cancelUrl': cancel_url,
+            'failureUrl': failure_url,
+            'metadata': {
+                'purchase_id': purchase.id,
+                'customer_name': purchase.full_name,
+                'customer_email': purchase.email,
+                'plan_name': purchase.house_plan.title
+            },
+            'clientReferenceId': str(purchase.id)
+        }
+
+        response = requests.post(yoco_url, json=payload, headers=headers)
+        response_data = response.json()
+
+        if response.status_code in (200, 201):
+            purchase.yoco_reference = response_data.get('id')
+            purchase.save()
+
+            return Response({
+                'success': True,
+                'redirect_url': response_data.get('redirectUrl'),
+                'checkout_id': response_data.get('id')
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            'success': False,
+            'error': response_data
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    except Purchase.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': 'Purchase not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
 def process_payment(request):
     """Process payment through Yoco"""
     try:

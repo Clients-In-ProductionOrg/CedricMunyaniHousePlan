@@ -36,29 +36,6 @@ import { ImageGallery } from '@/components/ImageGallery';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import Header from '@/components/Header';
 
-declare global {
-  interface Window {
-    YocoSDK?: any;
-    __yocoSdkPromise?: Promise<any>;
-  }
-}
-
-const loadYocoSdk = () => {
-  if (window.YocoSDK) return Promise.resolve(window.YocoSDK);
-  if (window.__yocoSdkPromise) return window.__yocoSdkPromise;
-
-  window.__yocoSdkPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://js.yoco.com/sdk/v1/yoco-sdk-web.js?v=2';
-    script.async = true;
-    script.onload = () => resolve(window.YocoSDK);
-    script.onerror = () => reject(new Error('Failed to load Yoco SDK'));
-    document.body.appendChild(script);
-  });
-
-  return window.__yocoSdkPromise;
-};
-
 // BuiltHomeCard Component
 function BuiltHomeCard({ plan }: { plan: HousePlan }) {
   const navigate = useNavigate();
@@ -85,88 +62,39 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
   });
   const [purchaseId, setPurchaseId] = useState<number | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [yocoPublicKey, setYocoPublicKey] = useState('');
 
-  // Fetch Yoco public key on component mount
-  useEffect(() => {
-    const fetchYocoKey = async () => {
-      try {
-        const response = await fetch(`${BACKEND_URL}/api/yoco-public-key/`);
-        const data = await response.json();
-        setYocoPublicKey(data.public_key);
-      } catch (error) {
-        console.error('Error fetching Yoco public key:', error);
-      }
-    };
-    fetchYocoKey();
-  }, []);
-
-  // Handle Yoco v2 payment with showPopup
-  const handleYocoPayment = async (home: any) => {
-    if (!yocoPublicKey || !purchaseId) {
-      alert('Payment initialization error. Please try again.');
-      return;
-    }
-
+  // Handle Checkout API payment
+  const handleCheckoutPayment = async (home: any, purchaseIdValue: number) => {
     setIsProcessingPayment(true);
-
     try {
-      // Get the Yoco SDK from window
-      const YocoSDK = await loadYocoSdk();
-      if (!YocoSDK) {
-        alert('Yoco SDK not loaded. Please refresh the page.');
-        setIsProcessingPayment(false);
-        return;
+      const origin = window.location.origin;
+      const successUrl = `${origin}/built-homes?checkout=success&purchase_id=${purchaseIdValue}`;
+      const cancelUrl = `${origin}/built-homes?checkout=cancel&purchase_id=${purchaseIdValue}`;
+      const failureUrl = `${origin}/built-homes?checkout=failure&purchase_id=${purchaseIdValue}`;
+
+      const response = await fetch(`${BACKEND_URL}/api/create-checkout/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          purchase_id: purchaseIdValue,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          failure_url: failureUrl,
+        })
+      });
+
+      const data = await response.json();
+      if (data.success && data.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        alert('Payment initialization failed. Please try again.');
       }
-
-      // Create Yoco instance
-      const yoco = new YocoSDK({
-        publicKey: yocoPublicKey
-      });
-
-      // Show payment popup (Yoco v2 API)
-      yoco.showPopup({
-        amountInCents: Math.round(home.price * 100),
-        currency: 'ZAR',
-        name: 'Built Home Purchase',
-        description: home.title,
-        callback: async (result: any) => {
-          if (result.error) {
-            alert('Payment failed: ' + result.error.message);
-            setIsProcessingPayment(false);
-            return;
-          }
-
-          // Send token to backend
-          try {
-            const response = await fetch(`${BACKEND_URL}/api/process-payment/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                purchase_id: purchaseId,
-                token: result.id,
-              })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-              setShowPaymentModal(false);
-              setShowSuccessModal(true);
-            } else {
-              alert('Payment failed: ' + data.error);
-            }
-          } catch (error) {
-            console.error('Payment processing error:', error);
-            alert('Payment processing error. Please try again.');
-          }
-          setIsProcessingPayment(false);
-        }
-      });
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('Payment processing error:', error);
       alert('Payment processing error. Please try again.');
+    } finally {
       setIsProcessingPayment(false);
     }
   };
@@ -448,7 +376,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                         console.log('Purchase saved:', data.id);
                         setShowBuyModal(false);
                         // Trigger Yoco payment directly with v2 API
-                        await handleYocoPayment(plan);
+                        await handleCheckoutPayment(plan, data.id);
                       } else {
                         alert('Error saving purchase: ' + data.error);
                       }

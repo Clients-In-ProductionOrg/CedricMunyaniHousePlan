@@ -15,6 +15,7 @@ urlpatterns = [
     # Payment API
     path('api/process-payment/', views.process_payment, name='process_payment'),
     path('api/yoco-public-key/', views.get_yoco_public_key, name='get_yoco_public_key'),
+    path('api/create-checkout/', views.create_checkout, name='create_checkout'),
     
     # Site Settings API
     path('api/site-settings/', views.get_site_settings, name='get_site_settings'),
