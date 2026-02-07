@@ -172,13 +172,22 @@ def _sync_purchase_with_yoco(purchase: Purchase) -> Purchase:
         return purchase
 
     response_data = response.json()
-    status_value = (response_data.get('status') or '').lower()
+    status_value = (
+        response_data.get('status')
+        or response_data.get('state')
+        or response_data.get('statusCode')
+        or ''
+    ).lower()
 
-    if status_value == 'succeeded':
+    if status_value in {'succeeded', 'successful', 'completed', 'paid'}:
         purchase.payment_status = 'completed'
-        purchase.yoco_payment_id = response_data.get('payment_id') or purchase.yoco_payment_id
+        purchase.yoco_payment_id = (
+            response_data.get('payment_id')
+            or response_data.get('paymentId')
+            or purchase.yoco_payment_id
+        )
         purchase.payment_date = purchase.payment_date or timezone.now()
-    elif status_value == 'cancelled':
+    elif status_value in {'cancelled', 'canceled'}:
         purchase.payment_status = 'cancelled'
     elif status_value == 'failed':
         purchase.payment_status = 'failed'
