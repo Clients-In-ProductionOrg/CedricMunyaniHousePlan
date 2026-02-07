@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Square, ArrowRight } from 'lucide-react';
+import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Square, ArrowRight, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -160,6 +160,27 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
     setIsGalleryOpen(true);
   };
 
+  const handleShareLink = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    const shareUrl = `${window.location.origin}/house-details/${plan.id}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: plan.title, url: shareUrl });
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Share link copied');
+        return;
+      }
+      window.prompt('Copy share link:', shareUrl);
+    } catch (error) {
+      console.error('Share failed:', error);
+      alert('Unable to share the link. Please try again.');
+    }
+  };
+
   return (
     <>
       <div className="group relative bg-card rounded-3xl overflow-hidden border border-border/50 hover:border-primary/20 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-shadow duration-500">
@@ -240,10 +261,21 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                 <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                   {plan.title}
                 </h3>
-                <p className="text-sm text-muted-foreground font-medium flex items-center gap-1">
-                   <Home className="w-3.5 h-3.5" /> 
-                   {plan.propertyType || "Modern Home"}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground font-medium flex items-center gap-1">
+                     <Home className="w-3.5 h-3.5" /> 
+                     {plan.propertyType || "Modern Home"}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleShareLink}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/50 bg-background/80 text-muted-foreground transition-colors hover:text-primary hover:border-primary/40"
+                    aria-label="Copy share link"
+                    title="Copy share link"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
              </div>
              <div className="text-right">
                 <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-0.5">Price</p>
