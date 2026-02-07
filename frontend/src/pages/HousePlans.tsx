@@ -590,6 +590,22 @@ export const HousePlans = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 6;
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const purchaseId = params.get('purchase_id');
+    if (!purchaseId) return;
+
+    const syncStatus = async () => {
+      try {
+        await fetch(`${BACKEND_URL}/api/purchase/${purchaseId}/sync/`);
+      } catch (error) {
+        console.error('Failed to sync purchase status:', error);
+      }
+    };
+
+    syncStatus();
+  }, []);
+
   // Fetch house plans from backend on component mount
   useEffect(() => {
     const fetchPlans = async () => {

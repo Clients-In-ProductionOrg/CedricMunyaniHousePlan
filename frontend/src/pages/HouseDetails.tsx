@@ -122,6 +122,22 @@ export const HouseDetails = () => {
     fetchPlan();
   }, [id]);
 
+   useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const purchaseId = params.get('purchase_id');
+      if (!purchaseId) return;
+
+      const syncStatus = async () => {
+         try {
+            await fetch(`${BACKEND_URL}/api/purchase/${purchaseId}/sync/`);
+         } catch (error) {
+            console.error('Failed to sync purchase status:', error);
+         }
+      };
+
+      syncStatus();
+   }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

@@ -355,6 +355,8 @@ class Purchase(models.Model):
     # Payment Information
     yoco_reference = models.CharField(max_length=255, blank=True, null=True, help_text="Yoco payment reference ID")
     yoco_token = models.CharField(max_length=255, blank=True, null=True, help_text="Yoco payment token")
+    yoco_checkout_id = models.CharField(max_length=255, blank=True, null=True, help_text="Yoco checkout session ID")
+    yoco_payment_id = models.CharField(max_length=255, blank=True, null=True, help_text="Yoco payment ID")
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

@@ -1,8 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.conf import settings
+from django.utils import timezone
 import requests
 from datetime import datetime
 from .models import HousePlan, HousePlanImage, Floor, Room, Feature, Amenity, QuoteRequest, ContactMessage, Purchase, SiteSettings
@@ -156,6 +157,38 @@ def get_yoco_public_key(request):
     })
 
 
+def _sync_purchase_with_yoco(purchase: Purchase) -> Purchase:
+    if not purchase.yoco_checkout_id:
+        return purchase
+
+    yoco_url = f"https://payments.yoco.com/api/checkouts/{purchase.yoco_checkout_id}"
+    headers = {
+        'Authorization': f'Bearer {settings.YOCO_SECRET_KEY}',
+        'Content-Type': 'application/json'
+    }
+
+    response = requests.get(yoco_url, headers=headers)
+    if response.status_code != 200:
+        return purchase
+
+    response_data = response.json()
+    status_value = (response_data.get('status') or '').lower()
+
+    if status_value == 'succeeded':
+        purchase.payment_status = 'completed'
+        purchase.yoco_payment_id = response_data.get('payment_id') or purchase.yoco_payment_id
+        purchase.payment_date = purchase.payment_date or timezone.now()
+    elif status_value == 'cancelled':
+        purchase.payment_status = 'cancelled'
+    elif status_value == 'failed':
+        purchase.payment_status = 'failed'
+    else:
+        purchase.payment_status = 'pending'
+
+    purchase.save(update_fields=['payment_status', 'yoco_payment_id', 'payment_date', 'updated_at'])
+    return purchase
+
+
 @api_view(['POST'])
 def create_checkout(request):
     """Create a Yoco Checkout session and return redirect URL"""
@@ -195,8 +228,11 @@ def create_checkout(request):
         response_data = response.json()
 
         if response.status_code in (200, 201):
-            purchase.yoco_reference = response_data.get('id')
-            purchase.save()
+            checkout_id = response_data.get('id')
+            purchase.yoco_reference = checkout_id
+            purchase.yoco_checkout_id = checkout_id
+            purchase.payment_status = 'pending'
+            purchase.save(update_fields=['yoco_reference', 'yoco_checkout_id', 'payment_status', 'updated_at'])
 
             return Response({
                 'success': True,
@@ -219,6 +255,16 @@ def create_checkout(request):
             'success': False,
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def sync_purchase_status(request, purchase_id):
+    """Sync payment status from Yoco Checkout"""
+    purchase = get_object_or_404(Purchase, pk=purchase_id)
+    purchase = _sync_purchase_with_yoco(purchase)
+    return Response({
+        'payment_status': purchase.payment_status
+    })
 
 
 @api_view(['POST'])
