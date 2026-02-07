@@ -198,6 +198,46 @@ def _sync_purchase_with_yoco(purchase: Purchase) -> Purchase:
     return purchase
 
 
+def _extract_checkout_id(payload: dict) -> str:
+    candidates = [
+        payload.get('checkout_id'),
+        payload.get('checkoutId'),
+        payload.get('id'),
+    ]
+
+    data = payload.get('data') if isinstance(payload.get('data'), dict) else {}
+    candidates.extend([
+        data.get('checkout_id'),
+        data.get('checkoutId'),
+        data.get('id'),
+    ])
+
+    for value in candidates:
+        if value:
+            return str(value)
+    return ''
+
+
+def _extract_event_status(payload: dict) -> str:
+    candidates = [
+        payload.get('status'),
+        payload.get('state'),
+        payload.get('statusCode'),
+    ]
+
+    data = payload.get('data') if isinstance(payload.get('data'), dict) else {}
+    candidates.extend([
+        data.get('status'),
+        data.get('state'),
+        data.get('statusCode'),
+    ])
+
+    for value in candidates:
+        if value:
+            return str(value).lower()
+    return ''
+
+
 @api_view(['POST'])
 def create_checkout(request):
     """Create a Yoco Checkout session and return redirect URL"""
@@ -274,6 +314,36 @@ def sync_purchase_status(request, purchase_id):
     return Response({
         'payment_status': purchase.payment_status
     })
+
+
+@api_view(['POST'])
+def yoco_webhook(request):
+    """Receive Yoco webhook events and update purchase status."""
+    payload = request.data if isinstance(request.data, dict) else {}
+    checkout_id = _extract_checkout_id(payload)
+
+    if not checkout_id:
+        return Response({'received': True})
+
+    purchase = Purchase.objects.filter(yoco_checkout_id=checkout_id).first()
+    if not purchase:
+        return Response({'received': True})
+
+    event_status = _extract_event_status(payload)
+    if event_status:
+        if event_status in {'succeeded', 'successful', 'completed', 'paid'}:
+            purchase.payment_status = 'completed'
+            purchase.payment_date = purchase.payment_date or timezone.now()
+        elif event_status in {'cancelled', 'canceled'}:
+            purchase.payment_status = 'cancelled'
+        elif event_status == 'failed':
+            purchase.payment_status = 'failed'
+
+        purchase.save(update_fields=['payment_status', 'payment_date', 'updated_at'])
+        return Response({'received': True})
+
+    _sync_purchase_with_yoco(purchase)
+    return Response({'received': True})
 
 
 @api_view(['POST'])
