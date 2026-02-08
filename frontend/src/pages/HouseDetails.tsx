@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, 
@@ -79,6 +79,7 @@ export const HouseDetails = () => {
    const [showReceiptBanner, setShowReceiptBanner] = useState(false);
    const [isReceiptLoading, setIsReceiptLoading] = useState(false);
    const [receiptError, setReceiptError] = useState<string | null>(null);
+   const hasTriggeredReceiptFlow = useRef(false);
 
   // Fetch plan from API
   useEffect(() => {
@@ -172,6 +173,20 @@ export const HouseDetails = () => {
          setIsReceiptLoading(false);
       }
    };
+
+   useEffect(() => {
+      if (!showReceiptBanner || !receiptPurchaseId || hasTriggeredReceiptFlow.current) return;
+      hasTriggeredReceiptFlow.current = true;
+
+      const whatsappNumber = '0726559790';
+      const message = `Hello, I have completed a purchase. My purchase ID is ${receiptPurchaseId}. Please assist with proof of payment on WhatsApp.`;
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+      setTimeout(() => {
+         handleDownloadReceipt();
+      }, 800);
+   }, [showReceiptBanner, receiptPurchaseId]);
 
   if (loading) {
     return (
