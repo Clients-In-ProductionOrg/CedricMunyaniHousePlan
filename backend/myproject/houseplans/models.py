@@ -1,6 +1,13 @@
 from django.db import models
 from django.conf import settings
 from storages.backends.s3boto3 import S3Boto3Storage
+import secrets
+
+PUBLIC_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+
+def generate_public_id(length: int = 7) -> str:
+    return ''.join(secrets.choice(PUBLIC_ID_ALPHABET) for _ in range(length))
 
 class HousePlanImageStorage(S3Boto3Storage):
     """Custom S3 storage for house plan images"""
@@ -351,6 +358,14 @@ class Purchase(models.Model):
         default='pending',
         help_text="Current payment status"
     )
+
+    public_id = models.CharField(
+        max_length=7,
+        unique=True,
+        db_index=True,
+        blank=True,
+        help_text="Public purchase ID used in URLs"
+    )
     
     # Payment Information
     yoco_reference = models.CharField(max_length=255, blank=True, null=True, help_text="Yoco payment reference ID")
@@ -370,3 +385,12 @@ class Purchase(models.Model):
     
     def __str__(self):
         return f"{self.full_name} - {self.house_plan.title} ({self.get_payment_status_display()})"
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            while True:
+                candidate = generate_public_id()
+                if not Purchase.objects.filter(public_id=candidate).exists():
+                    self.public_id = candidate
+                    break
+        super().save(*args, **kwargs)

@@ -11,10 +11,10 @@ urlpatterns = [
     path('api/quote-request/', views.create_quote_request, name='create_quote_request'),
     path('api/contact-message/', views.create_contact_message, name='create_contact_message'),
     path('api/purchase/', views.create_purchase, name='create_purchase'),
-    path('api/purchase/<int:purchase_id>/sync/', views.sync_purchase_status, name='sync_purchase_status'),
-    path('api/purchase/<int:purchase_id>/success/', views.purchase_success, name='purchase_success'),
-    path('api/purchase/<int:purchase_id>/cancel/', views.purchase_cancel, name='purchase_cancel'),
-    path('api/purchase/<int:purchase_id>/failure/', views.purchase_failure, name='purchase_failure'),
+    path('api/purchase/<str:purchase_id>/sync/', views.sync_purchase_status, name='sync_purchase_status'),
+    path('api/purchase/<str:purchase_id>/success/', views.purchase_success, name='purchase_success'),
+    path('api/purchase/<str:purchase_id>/cancel/', views.purchase_cancel, name='purchase_cancel'),
+    path('api/purchase/<str:purchase_id>/failure/', views.purchase_failure, name='purchase_failure'),
     
     # Payment API
     path('api/process-payment/', views.process_payment, name='process_payment'),

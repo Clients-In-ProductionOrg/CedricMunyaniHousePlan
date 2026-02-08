@@ -130,6 +130,7 @@ def create_purchase(request):
             'success': True,
             'message': 'Purchase created successfully',
             'id': purchase.id,
+            'public_id': purchase.public_id,
             'price': str(house_plan.price)
         }, status=status.HTTP_201_CREATED)
     except HousePlan.DoesNotExist:
@@ -263,13 +264,13 @@ def _get_return_url(request) -> str:
     return settings.FRONTEND_URL
 
 
-def _build_signature(purchase_id: int, action: str, return_url: str, expires: int) -> str:
+def _build_signature(purchase_id: str, action: str, return_url: str, expires: int) -> str:
     secret = settings.SECRET_KEY.encode('utf-8')
     message = f"{purchase_id}:{action}:{expires}:{return_url}".encode('utf-8')
     return hmac.new(secret, message, hashlib.sha256).hexdigest()
 
 
-def _build_signed_redirect_url(request, purchase_id: int, action: str, return_url: str) -> str:
+def _build_signed_redirect_url(request, purchase_id: str, action: str, return_url: str) -> str:
     backend_base = request.build_absolute_uri('/').rstrip('/')
     expires = int(time.time()) + (2 * 60 * 60)
     signature = _build_signature(purchase_id, action, return_url, expires)
@@ -280,7 +281,7 @@ def _build_signed_redirect_url(request, purchase_id: int, action: str, return_ur
     )
 
 
-def _validate_signature(request, purchase_id: int, action: str) -> bool:
+def _validate_signature(request, purchase_id: str, action: str) -> bool:
     return_url = request.query_params.get('return_url', '')
     expires = request.query_params.get('expires', '')
     signature = request.query_params.get('sig', '')
@@ -298,6 +299,15 @@ def _validate_signature(request, purchase_id: int, action: str) -> bool:
 
     expected = _build_signature(purchase_id, action, return_url, expires_value)
     return hmac.compare_digest(expected, signature)
+
+
+def _get_purchase_by_identifier(purchase_id: str) -> Purchase:
+    purchase_id = str(purchase_id).strip()
+    if purchase_id.isdigit():
+        purchase = Purchase.objects.filter(pk=int(purchase_id)).first()
+        if purchase:
+            return purchase
+    return get_object_or_404(Purchase, public_id=purchase_id)
 
 
 def _update_status_and_redirect(purchase: Purchase, status_value: str, request):
@@ -322,17 +332,18 @@ def create_checkout(request):
         data = request.data
         purchase_id = data.get('purchase_id')
 
-        purchase = Purchase.objects.get(pk=purchase_id)
+        purchase = _get_purchase_by_identifier(purchase_id)
 
+        backend_base = request.build_absolute_uri('/').rstrip('/')
         frontend_base = getattr(settings, 'FRONTEND_URL', None) or request.headers.get('Origin') or backend_base
 
-        success_return_url = f"{frontend_base}/house-plans?checkout=success&purchase_id={purchase.id}"
-        cancel_return_url = f"{frontend_base}/house-plans?checkout=cancel&purchase_id={purchase.id}"
-        failure_return_url = f"{frontend_base}/house-plans?checkout=failure&purchase_id={purchase.id}"
+        success_return_url = f"{frontend_base}/house-plans?checkout=success&purchase_id={purchase.public_id}"
+        cancel_return_url = f"{frontend_base}/house-plans?checkout=cancel&purchase_id={purchase.public_id}"
+        failure_return_url = f"{frontend_base}/house-plans?checkout=failure&purchase_id={purchase.public_id}"
 
-        success_url = _build_signed_redirect_url(request, purchase.id, 'success', success_return_url)
-        cancel_url = _build_signed_redirect_url(request, purchase.id, 'cancel', cancel_return_url)
-        failure_url = _build_signed_redirect_url(request, purchase.id, 'failure', failure_return_url)
+        success_url = _build_signed_redirect_url(request, purchase.public_id, 'success', success_return_url)
+        cancel_url = _build_signed_redirect_url(request, purchase.public_id, 'cancel', cancel_return_url)
+        failure_url = _build_signed_redirect_url(request, purchase.public_id, 'failure', failure_return_url)
 
         yoco_url = 'https://payments.yoco.com/api/checkouts'
         headers = {
@@ -350,11 +361,12 @@ def create_checkout(request):
             'failureUrl': failure_url,
             'metadata': {
                 'purchase_id': purchase.id,
+                'purchase_public_id': purchase.public_id,
                 'customer_name': purchase.full_name,
                 'customer_email': purchase.email,
                 'plan_name': purchase.house_plan.title
             },
-            'clientReferenceId': str(purchase.id)
+            'clientReferenceId': str(purchase.public_id)
         }
 
         response = requests.post(yoco_url, json=payload, headers=headers)
@@ -393,7 +405,7 @@ def create_checkout(request):
 @api_view(['GET'])
 def sync_purchase_status(request, purchase_id):
     """Sync payment status from Yoco Checkout"""
-    purchase = get_object_or_404(Purchase, pk=purchase_id)
+    purchase = _get_purchase_by_identifier(purchase_id)
     purchase = _sync_purchase_with_yoco(purchase)
     return Response({
         'payment_status': purchase.payment_status
@@ -435,7 +447,7 @@ def purchase_success(request, purchase_id):
     """Handle success redirects from Yoco checkout."""
     if not _validate_signature(request, purchase_id, 'success'):
         return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
-    purchase = get_object_or_404(Purchase, pk=purchase_id)
+    purchase = _get_purchase_by_identifier(purchase_id)
     _sync_purchase_with_yoco(purchase)
     if purchase.payment_status == 'completed':
         return redirect(_get_return_url(request))
@@ -447,7 +459,7 @@ def purchase_cancel(request, purchase_id):
     """Handle cancel redirects from Yoco checkout."""
     if not _validate_signature(request, purchase_id, 'cancel'):
         return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
-    purchase = get_object_or_404(Purchase, pk=purchase_id)
+    purchase = _get_purchase_by_identifier(purchase_id)
     logger.info("Yoco cancel redirect received", extra={"purchase_id": purchase_id, "current_status": purchase.payment_status})
     return _update_status_and_redirect(purchase, 'cancelled', request)
 
@@ -457,7 +469,7 @@ def purchase_failure(request, purchase_id):
     """Handle failure redirects from Yoco checkout."""
     if not _validate_signature(request, purchase_id, 'failure'):
         return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
-    purchase = get_object_or_404(Purchase, pk=purchase_id)
+    purchase = _get_purchase_by_identifier(purchase_id)
     return _update_status_and_redirect(purchase, 'failed', request)
 
 
@@ -470,7 +482,7 @@ def process_payment(request):
         token = data.get('token')
         
         # Get the purchase
-        purchase = Purchase.objects.get(pk=purchase_id)
+        purchase = _get_purchase_by_identifier(purchase_id)
         
         if not token:
             return Response({

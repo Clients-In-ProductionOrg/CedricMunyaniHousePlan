@@ -205,16 +205,17 @@ export const HouseDetails = () => {
             return;
          }
 
+         const purchaseIdentifier = purchaseData.public_id || purchaseData.id;
          const origin = window.location.origin;
          const basePath = `${origin}/house-details/${plan.id}`;
-         const successReturnUrl = `${basePath}?checkout=success&purchase_id=${purchaseData.id}`;
-         const cancelReturnUrl = `${basePath}?checkout=cancel&purchase_id=${purchaseData.id}`;
-         const failureReturnUrl = `${basePath}?checkout=failure&purchase_id=${purchaseData.id}`;
+         const successReturnUrl = `${basePath}?checkout=success&purchase_id=${purchaseIdentifier}`;
+         const cancelReturnUrl = `${basePath}?checkout=cancel&purchase_id=${purchaseIdentifier}`;
+         const failureReturnUrl = `${basePath}?checkout=failure&purchase_id=${purchaseIdentifier}`;
 
          const backendUrl = 'https://cedricmunyanihouseplan-backend.onrender.com';
-         const successUrl = `${backendUrl}/api/purchase/${purchaseData.id}/success/?return_url=${encodeURIComponent(successReturnUrl)}`;
-         const cancelUrl = `${backendUrl}/api/purchase/${purchaseData.id}/cancel/?return_url=${encodeURIComponent(cancelReturnUrl)}`;
-         const failureUrl = `${backendUrl}/api/purchase/${purchaseData.id}/failure/?return_url=${encodeURIComponent(failureReturnUrl)}`;
+         const successUrl = `${backendUrl}/api/purchase/${purchaseIdentifier}/success/?return_url=${encodeURIComponent(successReturnUrl)}`;
+         const cancelUrl = `${backendUrl}/api/purchase/${purchaseIdentifier}/cancel/?return_url=${encodeURIComponent(cancelReturnUrl)}`;
+         const failureUrl = `${backendUrl}/api/purchase/${purchaseIdentifier}/failure/?return_url=${encodeURIComponent(failureReturnUrl)}`;
 
          const checkoutResponse = await fetch(`https://cedricmunyanihouseplan-backend.onrender.com/api/create-checkout/`, {
             method: 'POST',
@@ -222,7 +223,7 @@ export const HouseDetails = () => {
                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-               purchase_id: purchaseData.id,
+               purchase_id: purchaseIdentifier,
                success_url: successUrl,
                cancel_url: cancelUrl,
                failure_url: failureUrl,

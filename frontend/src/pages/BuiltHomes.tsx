@@ -60,11 +60,11 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
     expiryDate: '', 
     cvv: '' 
   });
-  const [purchaseId, setPurchaseId] = useState<number | null>(null);
+  const [purchaseId, setPurchaseId] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Handle Checkout API payment
-  const handleCheckoutPayment = async (home: any, purchaseIdValue: number) => {
+  const handleCheckoutPayment = async (home: any, purchaseIdValue: string) => {
     setIsProcessingPayment(true);
     try {
       const origin = window.location.origin;
@@ -389,11 +389,12 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                       
                       const data = await response.json();
                       if (data.success) {
-                        setPurchaseId(data.id);
-                        console.log('Purchase saved:', data.id);
+                        const purchaseIdentifier = data.public_id || data.id;
+                        setPurchaseId(purchaseIdentifier);
+                        console.log('Purchase saved:', purchaseIdentifier);
                         setShowBuyModal(false);
                         // Trigger Yoco payment directly with v2 API
-                        await handleCheckoutPayment(plan, data.id);
+                        await handleCheckoutPayment(plan, purchaseIdentifier);
                       } else {
                         alert('Error saving purchase: ' + data.error);
                       }
