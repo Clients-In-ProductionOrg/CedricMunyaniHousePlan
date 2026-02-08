@@ -60,6 +60,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
   const [showSecretPassword, setShowSecretPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPasswordMismatch, setShowPasswordMismatch] = useState(false);
+  const [missingFields, setMissingFields] = useState<Record<string, boolean>>({});
   const [paymentInfo, setPaymentInfo] = useState({ 
     cardNumber: '', 
     expiryDate: '', 
@@ -320,22 +321,37 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                     type="text"
                     placeholder="Your Name"
                     value={contactInfo.name}
-                    onChange={(e) => setContactInfo({ ...contactInfo, name: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
+                    onChange={(e) => {
+                      setContactInfo({ ...contactInfo, name: e.target.value });
+                      if (missingFields.name) {
+                        setMissingFields({ ...missingFields, name: false });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.name ? 'border-red-500' : ''}`}
                   />
                   <input
                     type="email"
                     placeholder="Your Email"
                     value={contactInfo.email}
-                    onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
+                    onChange={(e) => {
+                      setContactInfo({ ...contactInfo, email: e.target.value });
+                      if (missingFields.email) {
+                        setMissingFields({ ...missingFields, email: false });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.email ? 'border-red-500' : ''}`}
                   />
                   <input
                     type="tel"
                     placeholder="Your Phone"
                     value={contactInfo.phone}
-                    onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
+                    onChange={(e) => {
+                      setContactInfo({ ...contactInfo, phone: e.target.value });
+                      if (missingFields.phone) {
+                        setMissingFields({ ...missingFields, phone: false });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.phone ? 'border-red-500' : ''}`}
                   />
                   <div className="relative">
                     <input
@@ -346,6 +362,9 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                         const nextValue = e.target.value;
                         const nextConfirm = contactInfo.confirmPassword;
                         setContactInfo({ ...contactInfo, secretPassword: nextValue });
+                        if (missingFields.secretPassword) {
+                          setMissingFields({ ...missingFields, secretPassword: false });
+                        }
                         if (nextConfirm) {
                           setShowPasswordMismatch(nextValue !== nextConfirm);
                         }
@@ -355,7 +374,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                           setShowPasswordMismatch(contactInfo.secretPassword !== contactInfo.confirmPassword);
                         }
                       }}
-                      className="w-full px-3 py-2 border rounded-lg mb-3 text-sm pr-10"
+                      className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm pr-10 ${missingFields.secretPassword ? 'border-red-500' : ''}`}
                     />
                     <button
                       type="button"
@@ -375,6 +394,9 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                         const nextValue = e.target.value;
                         const nextSecret = contactInfo.secretPassword;
                         setContactInfo({ ...contactInfo, confirmPassword: nextValue });
+                        if (missingFields.confirmPassword) {
+                          setMissingFields({ ...missingFields, confirmPassword: false });
+                        }
                         if (nextSecret) {
                           setShowPasswordMismatch(nextSecret !== nextValue);
                         }
@@ -384,7 +406,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                           setShowPasswordMismatch(contactInfo.secretPassword !== contactInfo.confirmPassword);
                         }
                       }}
-                      className="w-full px-3 py-2 border rounded-lg mb-1 text-sm pr-10"
+                      className={`w-full px-3 py-2 border rounded-lg mb-1 text-sm pr-10 ${missingFields.confirmPassword ? 'border-red-500' : ''}`}
                     />
                     <button
                       type="button"
@@ -402,30 +424,53 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                     type="text"
                     placeholder="Province"
                     value={contactInfo.province}
-                    onChange={(e) => setContactInfo({ ...contactInfo, province: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
+                    onChange={(e) => {
+                      setContactInfo({ ...contactInfo, province: e.target.value });
+                      if (missingFields.province) {
+                        setMissingFields({ ...missingFields, province: false });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.province ? 'border-red-500' : ''}`}
                   />
                   <input
                     type="text"
                     placeholder="City"
                     value={contactInfo.city}
-                    onChange={(e) => setContactInfo({ ...contactInfo, city: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
+                    onChange={(e) => {
+                      setContactInfo({ ...contactInfo, city: e.target.value });
+                      if (missingFields.city) {
+                        setMissingFields({ ...missingFields, city: false });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.city ? 'border-red-500' : ''}`}
                   />
                   <input
                     type="text"
                     placeholder="Pick-up Point"
                     value={contactInfo.pickupPoint}
-                    onChange={(e) => setContactInfo({ ...contactInfo, pickupPoint: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
+                    onChange={(e) => {
+                      setContactInfo({ ...contactInfo, pickupPoint: e.target.value });
+                      if (missingFields.pickupPoint) {
+                        setMissingFields({ ...missingFields, pickupPoint: false });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.pickupPoint ? 'border-red-500' : ''}`}
                   />
                   <input
                     type="text"
                     placeholder="Area / Mall"
                     value={contactInfo.areaMall}
-                    onChange={(e) => setContactInfo({ ...contactInfo, areaMall: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                    onChange={(e) => {
+                      setContactInfo({ ...contactInfo, areaMall: e.target.value });
+                      if (missingFields.areaMall) {
+                        setMissingFields({ ...missingFields, areaMall: false });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg text-sm ${missingFields.areaMall ? 'border-red-500' : ''}`}
                   />
+                  {Object.values(missingFields).some(Boolean) && (
+                    <p className="text-xs text-red-600 mt-2">Please fill in all required fields.</p>
+                  )}
                 </div>
               </div>
 
@@ -436,8 +481,18 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                   onClick={async () => {
                     // Save purchase to database
                     try {
-                      if (!contactInfo.name || !contactInfo.email || !contactInfo.phone || !contactInfo.secretPassword || !contactInfo.confirmPassword || !contactInfo.province || !contactInfo.city || !contactInfo.pickupPoint || !contactInfo.areaMall) {
-                        alert('Please fill in all required fields');
+                      const nextMissing: Record<string, boolean> = {};
+                      if (!contactInfo.name) nextMissing.name = true;
+                      if (!contactInfo.email) nextMissing.email = true;
+                      if (!contactInfo.phone) nextMissing.phone = true;
+                      if (!contactInfo.secretPassword) nextMissing.secretPassword = true;
+                      if (!contactInfo.confirmPassword) nextMissing.confirmPassword = true;
+                      if (!contactInfo.province) nextMissing.province = true;
+                      if (!contactInfo.city) nextMissing.city = true;
+                      if (!contactInfo.pickupPoint) nextMissing.pickupPoint = true;
+                      if (!contactInfo.areaMall) nextMissing.areaMall = true;
+                      setMissingFields(nextMissing);
+                      if (Object.keys(nextMissing).length > 0) {
                         return;
                       }
                       if (contactInfo.secretPassword !== contactInfo.confirmPassword) {

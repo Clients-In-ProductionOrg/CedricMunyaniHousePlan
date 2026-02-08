@@ -72,6 +72,7 @@ export const HouseDetails = () => {
    const [showSecretPassword, setShowSecretPassword] = useState(false);
    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
    const [showPasswordMismatch, setShowPasswordMismatch] = useState(false);
+   const [missingFields, setMissingFields] = useState<Record<string, boolean>>({});
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
    const [receiptPurchaseId, setReceiptPurchaseId] = useState<string | null>(null);
@@ -716,7 +717,13 @@ export const HouseDetails = () => {
                        <Input 
                              placeholder="Enter your full name" 
                              value={contactInfo.name}
-                             onChange={e => setContactInfo({...contactInfo, name: e.target.value})}
+                                           onChange={e => {
+                                              setContactInfo({...contactInfo, name: e.target.value});
+                                              if (missingFields.name) {
+                                                 setMissingFields({ ...missingFields, name: false });
+                                              }
+                                           }}
+                                           className={missingFields.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
                        />
                     </div>
 
@@ -726,7 +733,13 @@ export const HouseDetails = () => {
                           type="email" 
                           placeholder="Enter your email address" 
                           value={contactInfo.email}
-                          onChange={e => setContactInfo({...contactInfo, email: e.target.value})}
+                                       onChange={e => {
+                                          setContactInfo({...contactInfo, email: e.target.value});
+                                          if (missingFields.email) {
+                                             setMissingFields({ ...missingFields, email: false });
+                                          }
+                                       }}
+                                       className={missingFields.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
                        />
                     </div>
 
@@ -735,7 +748,13 @@ export const HouseDetails = () => {
                        <Input 
                           placeholder="Enter your phone number" 
                           value={contactInfo.phone}
-                          onChange={e => setContactInfo({...contactInfo, phone: e.target.value})}
+                                       onChange={e => {
+                                          setContactInfo({...contactInfo, phone: e.target.value});
+                                          if (missingFields.phone) {
+                                             setMissingFields({ ...missingFields, phone: false });
+                                          }
+                                       }}
+                                       className={missingFields.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
                        />
                     </div>
 
@@ -750,6 +769,9 @@ export const HouseDetails = () => {
                                const nextValue = e.target.value;
                                const nextConfirm = contactInfo.confirmPassword;
                                setContactInfo({...contactInfo, secretPassword: nextValue});
+                                              if (missingFields.secretPassword) {
+                                                 setMissingFields({ ...missingFields, secretPassword: false });
+                                              }
                                if (nextConfirm) {
                                  setShowPasswordMismatch(nextValue !== nextConfirm);
                                }
@@ -759,7 +781,7 @@ export const HouseDetails = () => {
                                  setShowPasswordMismatch(contactInfo.secretPassword !== contactInfo.confirmPassword);
                                }
                              }}
-                             className="pr-10"
+                                           className={`pr-10 ${missingFields.secretPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                           />
                           <button
                              type="button"
@@ -783,6 +805,9 @@ export const HouseDetails = () => {
                                const nextValue = e.target.value;
                                const nextSecret = contactInfo.secretPassword;
                                setContactInfo({...contactInfo, confirmPassword: nextValue});
+                                              if (missingFields.confirmPassword) {
+                                                 setMissingFields({ ...missingFields, confirmPassword: false });
+                                              }
                                if (nextSecret) {
                                  setShowPasswordMismatch(nextSecret !== nextValue);
                                }
@@ -792,7 +817,7 @@ export const HouseDetails = () => {
                                  setShowPasswordMismatch(contactInfo.secretPassword !== contactInfo.confirmPassword);
                                }
                              }}
-                             className="pr-10"
+                                           className={`pr-10 ${missingFields.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                           />
                           <button
                              type="button"
@@ -814,7 +839,13 @@ export const HouseDetails = () => {
                           <Input 
                              placeholder="e.g. Gauteng" 
                              value={contactInfo.province}
-                             onChange={e => setContactInfo({...contactInfo, province: e.target.value})}
+                             onChange={e => {
+                               setContactInfo({...contactInfo, province: e.target.value});
+                               if (missingFields.province) {
+                                 setMissingFields({ ...missingFields, province: false });
+                               }
+                             }}
+                             className={missingFields.province ? 'border-red-500 focus-visible:ring-red-500' : ''}
                           />
                        </div>
                        <div className="space-y-2">
@@ -822,7 +853,13 @@ export const HouseDetails = () => {
                           <Input 
                              placeholder="e.g. Johannesburg" 
                              value={contactInfo.city}
-                             onChange={e => setContactInfo({...contactInfo, city: e.target.value})}
+                             onChange={e => {
+                               setContactInfo({...contactInfo, city: e.target.value});
+                               if (missingFields.city) {
+                                 setMissingFields({ ...missingFields, city: false });
+                               }
+                             }}
+                             className={missingFields.city ? 'border-red-500 focus-visible:ring-red-500' : ''}
                           />
                        </div>
                     </div>
@@ -832,7 +869,13 @@ export const HouseDetails = () => {
                         <Input 
                           placeholder="e.g. PostNet or Pep Store" 
                           value={contactInfo.pickupPoint}
-                          onChange={e => setContactInfo({...contactInfo, pickupPoint: e.target.value})}
+                                       onChange={e => {
+                                          setContactInfo({...contactInfo, pickupPoint: e.target.value});
+                                          if (missingFields.pickupPoint) {
+                                             setMissingFields({ ...missingFields, pickupPoint: false });
+                                          }
+                                       }}
+                                       className={missingFields.pickupPoint ? 'border-red-500 focus-visible:ring-red-500' : ''}
                        />
                     </div>
 
@@ -841,20 +884,40 @@ export const HouseDetails = () => {
                         <Input 
                           placeholder="e.g. Sandton City" 
                           value={contactInfo.areaMall}
-                          onChange={e => setContactInfo({...contactInfo, areaMall: e.target.value})}
+                                       onChange={e => {
+                                          setContactInfo({...contactInfo, areaMall: e.target.value});
+                                          if (missingFields.areaMall) {
+                                             setMissingFields({ ...missingFields, areaMall: false });
+                                          }
+                                       }}
+                                       className={missingFields.areaMall ? 'border-red-500 focus-visible:ring-red-500' : ''}
                        />
                     </div>
                  </div>
+
+                         {Object.values(missingFields).some(Boolean) && (
+                              <p className="text-sm text-red-600">Please fill in all required fields.</p>
+                         )}
 
                  <div className="flex gap-3 pt-2">
                     <Button 
                      size="lg"
                      className="flex-1 text-base font-semibold" 
                      onClick={() => {
-                                  if (!contactInfo.name || !contactInfo.email || !contactInfo.phone || !contactInfo.secretPassword || !contactInfo.confirmPassword || !contactInfo.province || !contactInfo.city || !contactInfo.pickupPoint || !contactInfo.areaMall) {
-                         alert('Please fill in all required fields');
-                         return;
-                       }
+                                  const nextMissing: Record<string, boolean> = {};
+                                  if (!contactInfo.name) nextMissing.name = true;
+                                  if (!contactInfo.email) nextMissing.email = true;
+                                  if (!contactInfo.phone) nextMissing.phone = true;
+                                  if (!contactInfo.secretPassword) nextMissing.secretPassword = true;
+                                  if (!contactInfo.confirmPassword) nextMissing.confirmPassword = true;
+                                  if (!contactInfo.province) nextMissing.province = true;
+                                  if (!contactInfo.city) nextMissing.city = true;
+                                  if (!contactInfo.pickupPoint) nextMissing.pickupPoint = true;
+                                  if (!contactInfo.areaMall) nextMissing.areaMall = true;
+                                  setMissingFields(nextMissing);
+                                  if (Object.keys(nextMissing).length > 0) {
+                                     return;
+                                  }
                                   if (contactInfo.secretPassword !== contactInfo.confirmPassword) {
                                      setShowPasswordMismatch(true);
                                      alert('Passwords do not match');
