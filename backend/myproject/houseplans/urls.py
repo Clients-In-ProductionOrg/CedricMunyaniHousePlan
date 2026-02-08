@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/purchase/<str:purchase_id>/sync/', views.sync_purchase_status, name='sync_purchase_status'),
     path('api/purchase/<str:purchase_id>/receipt-link/', views.purchase_receipt_link, name='purchase_receipt_link'),
     path('api/purchase/receipt-lookup/', views.purchase_receipt_lookup, name='purchase_receipt_lookup'),
+    path('api/purchase/phone-summary/', views.purchase_phone_summary, name='purchase_phone_summary'),
     path('api/purchase/<str:purchase_id>/receipt/', views.purchase_receipt, name='purchase_receipt'),
     path('api/purchase/<str:purchase_id>/summary/', views.purchase_summary, name='purchase_summary'),
     path('api/purchase/<str:purchase_id>/success/', views.purchase_success, name='purchase_success'),

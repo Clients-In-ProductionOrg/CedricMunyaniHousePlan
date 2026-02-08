@@ -51,6 +51,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
   const [receiptLookupError, setReceiptLookupError] = useState<string | null>(null);
   const [isReceiptLookupLoading, setIsReceiptLookupLoading] = useState(false);
   const [showReceiptPassword, setShowReceiptPassword] = useState(false);
+  const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
   const [contactInfo, setContactInfo] = useState({ 
     name: '', 
     email: '', 
@@ -119,6 +120,53 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
       setReceiptLookupError(error?.message || 'Unable to download receipt.');
     } finally {
       setIsReceiptLookupLoading(false);
+    }
+  };
+
+  const handleForgotSecretPassword = async () => {
+    if (!receiptLookup.phone) {
+      setReceiptLookupError('Please enter your phone number first.');
+      return;
+    }
+    if (receiptLookup.phone.length !== 10) {
+      setReceiptLookupError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+      return;
+    }
+
+    setIsForgotPasswordLoading(true);
+    setReceiptLookupError(null);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/purchase/phone-summary/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone_number: receiptLookup.phone,
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Unable to find your purchase details.');
+      }
+
+      const message = (
+        `Hello, I forgot my secret password for my house plan purchase. Please assist me based on my cellphone number.\n\n` +
+        `Full Name: ${data.full_name}\n` +
+        `Phone: ${data.phone_number}\n` +
+        `Email: ${data.email}\n` +
+        `Plan: ${data.plan_title}\n` +
+        `Price: R ${data.plan_price}\n` +
+        `Plan Link: ${data.plan_url}`
+      );
+
+      const whatsappUrl = `https://wa.me/27726659790?text=${encodeURIComponent(message)}`;
+      window.location.href = whatsappUrl;
+    } catch (error: any) {
+      setReceiptLookupError(error?.message || 'Unable to find your purchase details.');
+    } finally {
+      setIsForgotPasswordLoading(false);
     }
   };
 
@@ -443,6 +491,14 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                   </button>
                 </div>
                 <p className="text-xs text-red-500 font-medium">Enter the secret password used for the house plan purchase.</p>
+                <button
+                  type="button"
+                  onClick={handleForgotSecretPassword}
+                  disabled={isForgotPasswordLoading}
+                  className="text-xs text-primary font-semibold hover:underline disabled:text-muted-foreground"
+                >
+                  {isForgotPasswordLoading ? 'Requesting help...' : 'Forgotten secret password?'}
+                </button>
                 {receiptLookupError && (
                   <p className="text-sm text-red-600">{receiptLookupError}</p>
                 )}

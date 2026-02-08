@@ -1,5 +1,5 @@
-import { Home, Search, X, MessageCircle, Menu } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Home, Search, X, MessageCircle, Menu, Download } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { chatBotRef } from "./ChatBot";
@@ -7,6 +7,7 @@ import { ThemeToggle } from "./ThemeToggle";
 
 const Header = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -37,6 +38,7 @@ const Header = () => {
     { to: "/services", label: "Services" },
     { to: "/about", label: "About" },
     { to: "/contact", label: "Contact" },
+    { to: "/house-plans?download_receipt=1", label: "Download Plan", icon: Download, iconClassName: "text-red-600", labelClassName: "text-red-600", openReceipt: true },
   ];
 
   return (
@@ -56,13 +58,23 @@ const Header = () => {
             <Link 
               key={link.to} 
               to={link.to} 
+              onClick={(event) => {
+                if (link.openReceipt && location.pathname === '/house-plans') {
+                  event.preventDefault();
+                  navigate('/house-plans?download_receipt=1', { replace: false });
+                  window.dispatchEvent(new CustomEvent('openReceiptModal'));
+                }
+              }}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                 isActive(link.to) 
                   ? "bg-primary/10 text-primary" 
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
-              {link.label}
+              <span className={`inline-flex items-center gap-2 ${link.labelClassName || ''}`}>
+                {link.icon && <link.icon className={`h-4 w-4 ${link.iconClassName || ''}`} />}
+                {link.label}
+              </span>
             </Link>
           ))}
         </nav>
@@ -114,9 +126,19 @@ const Header = () => {
                 key={link.to}
                 to={link.to}
                 className={getMobileLinkClasses(link.to)}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={(event) => {
+                  if (link.openReceipt && location.pathname === '/house-plans') {
+                    event.preventDefault();
+                    navigate('/house-plans?download_receipt=1', { replace: false });
+                    window.dispatchEvent(new CustomEvent('openReceiptModal'));
+                  }
+                  setIsMobileMenuOpen(false);
+                }}
               >
-                {link.label}
+                <span className={`inline-flex items-center gap-2 ${link.labelClassName || ''}`}>
+                  {link.icon && <link.icon className={`h-4 w-4 ${link.iconClassName || ''}`} />}
+                  {link.label}
+                </span>
               </Link>
             ))}
 

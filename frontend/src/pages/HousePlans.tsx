@@ -84,6 +84,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
   const [receiptLookupError, setReceiptLookupError] = useState<string | null>(null);
   const [isReceiptLookupLoading, setIsReceiptLookupLoading] = useState(false);
   const [showReceiptPassword, setShowReceiptPassword] = useState(false);
+  const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
   const [contactInfo, setContactInfo] = useState({ 
     name: '', 
     email: '', 
@@ -236,6 +237,53 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
       setReceiptLookupError(error?.message || 'Unable to download receipt.');
     } finally {
       setIsReceiptLookupLoading(false);
+    }
+  };
+
+  const handleForgotSecretPassword = async () => {
+    if (!receiptLookup.phone) {
+      setReceiptLookupError('Please enter your phone number first.');
+      return;
+    }
+    if (receiptLookup.phone.length !== 10) {
+      setReceiptLookupError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+      return;
+    }
+
+    setIsForgotPasswordLoading(true);
+    setReceiptLookupError(null);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/purchase/phone-summary/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone_number: receiptLookup.phone,
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Unable to find your purchase details.');
+      }
+
+      const message = (
+        `Hello, I forgot my secret password for my house plan purchase. Please assist me based on my cellphone number.\n\n` +
+        `Full Name: ${data.full_name}\n` +
+        `Phone: ${data.phone_number}\n` +
+        `Email: ${data.email}\n` +
+        `Plan: ${data.plan_title}\n` +
+        `Price: R ${data.plan_price}\n` +
+        `Plan Link: ${data.plan_url}`
+      );
+
+      const whatsappUrl = `https://wa.me/27726659790?text=${encodeURIComponent(message)}`;
+      window.location.href = whatsappUrl;
+    } catch (error: any) {
+      setReceiptLookupError(error?.message || 'Unable to find your purchase details.');
+    } finally {
+      setIsForgotPasswordLoading(false);
     }
   };
 
@@ -523,6 +571,14 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                     </button>
                   </div>
                   <p className="text-xs text-red-500 font-medium">Enter the secret password used for the house plan purchase.</p>
+                  <button
+                    type="button"
+                    onClick={handleForgotSecretPassword}
+                    disabled={isForgotPasswordLoading}
+                    className="text-xs text-primary font-semibold hover:underline disabled:text-muted-foreground"
+                  >
+                    {isForgotPasswordLoading ? 'Requesting help...' : 'Forgotten secret password?'}
+                  </button>
                 </div>
                 {receiptLookupError && (
                   <p className="text-sm text-red-600">{receiptLookupError}</p>
@@ -943,6 +999,12 @@ export const HousePlans = () => {
   const [showReceiptBanner, setShowReceiptBanner] = useState(false);
   const [isReceiptLoading, setIsReceiptLoading] = useState(false);
   const [receiptError, setReceiptError] = useState<string | null>(null);
+  const [showGlobalReceiptModal, setShowGlobalReceiptModal] = useState(false);
+  const [globalReceiptLookup, setGlobalReceiptLookup] = useState({ phone: '', secretPassword: '' });
+  const [globalReceiptError, setGlobalReceiptError] = useState<string | null>(null);
+  const [isGlobalReceiptLoading, setIsGlobalReceiptLoading] = useState(false);
+  const [showGlobalReceiptPassword, setShowGlobalReceiptPassword] = useState(false);
+  const [isGlobalForgotPasswordLoading, setIsGlobalForgotPasswordLoading] = useState(false);
   const hasTriggeredReceiptFlow = useRef(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 6;
@@ -951,6 +1013,7 @@ export const HousePlans = () => {
     const params = new URLSearchParams(window.location.search);
     const purchaseId = params.get('purchase_id');
     const checkout = params.get('checkout');
+    const downloadReceipt = params.get('download_receipt');
     if (!purchaseId) return;
 
     setReceiptPurchaseId(purchaseId);
@@ -965,6 +1028,22 @@ export const HousePlans = () => {
     };
 
     syncStatus();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('download_receipt') === '1') {
+      setShowGlobalReceiptModal(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleOpenReceiptModal = () => {
+      setShowGlobalReceiptModal(true);
+    };
+
+    window.addEventListener('openReceiptModal', handleOpenReceiptModal as EventListener);
+    return () => window.removeEventListener('openReceiptModal', handleOpenReceiptModal as EventListener);
   }, []);
 
   const handleDownloadReceipt = async () => {
@@ -983,6 +1062,94 @@ export const HousePlans = () => {
       setReceiptError('Unable to generate receipt. Please try again.');
     } finally {
       setIsReceiptLoading(false);
+    }
+  };
+
+  const normalizePhone = (value: string) => value.replace(/\D/g, '');
+
+  const handleGlobalReceiptLookup = async () => {
+    if (!globalReceiptLookup.phone || !globalReceiptLookup.secretPassword) {
+      setGlobalReceiptError('Please enter your phone number and secret password.');
+      return;
+    }
+    if (globalReceiptLookup.phone.length !== 10) {
+      setGlobalReceiptError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+      return;
+    }
+
+    setIsGlobalReceiptLoading(true);
+    setGlobalReceiptError(null);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/purchase/receipt-lookup/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone_number: globalReceiptLookup.phone,
+          secret_password: globalReceiptLookup.secretPassword,
+          return_path: `${window.location.pathname}${window.location.search}`,
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.url) {
+        throw new Error(data.detail || 'Unable to download receipt.');
+      }
+
+      setShowGlobalReceiptModal(false);
+      window.location.href = data.url;
+    } catch (error: any) {
+      setGlobalReceiptError(error?.message || 'Unable to download receipt.');
+    } finally {
+      setIsGlobalReceiptLoading(false);
+    }
+  };
+
+  const handleGlobalForgotSecretPassword = async () => {
+    if (!globalReceiptLookup.phone) {
+      setGlobalReceiptError('Please enter your phone number first.');
+      return;
+    }
+    if (globalReceiptLookup.phone.length !== 10) {
+      setGlobalReceiptError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+      return;
+    }
+
+    setIsGlobalForgotPasswordLoading(true);
+    setGlobalReceiptError(null);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/purchase/phone-summary/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone_number: globalReceiptLookup.phone,
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Unable to find your purchase details.');
+      }
+
+      const message = (
+        `Hello, I forgot my secret password for my house plan purchase. Please assist me based on my cellphone number.\n\n` +
+        `Full Name: ${data.full_name}\n` +
+        `Phone: ${data.phone_number}\n` +
+        `Email: ${data.email}\n` +
+        `Plan: ${data.plan_title}\n` +
+        `Price: R ${data.plan_price}\n` +
+        `Plan Link: ${data.plan_url}`
+      );
+
+      const whatsappUrl = `https://wa.me/27726659790?text=${encodeURIComponent(message)}`;
+      window.location.href = whatsappUrl;
+    } catch (error: any) {
+      setGlobalReceiptError(error?.message || 'Unable to find your purchase details.');
+    } finally {
+      setIsGlobalForgotPasswordLoading(false);
     }
   };
 
@@ -1238,6 +1405,86 @@ export const HousePlans = () => {
   return (
     <>
       <Header />
+      {showGlobalReceiptModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <Card className="w-full max-w-md border-2 border-primary/20 shadow-2xl">
+            <div className="relative shrink-0 h-20 bg-primary/10 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-blue-600/20" />
+              <div className="absolute bottom-3 left-6">
+                <h2 className="text-xl font-bold">Download Receipt</h2>
+                <p className="text-sm text-muted-foreground">Enter your purchase details</p>
+              </div>
+              <button
+                onClick={() => setShowGlobalReceiptModal(false)}
+                className="absolute top-3 right-3 p-2 bg-background/50 hover:bg-background rounded-full transition-colors"
+                aria-label="Close receipt modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <CardContent className="p-6 space-y-4">
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input
+                  type="tel"
+                  placeholder="e.g 0726659790"
+                  value={globalReceiptLookup.phone}
+                  onChange={(e) => setGlobalReceiptLookup({ ...globalReceiptLookup, phone: normalizePhone(e.target.value) })}
+                />
+                <p className="text-xs text-red-500 font-medium">Enter the phone number used for the purchase.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Secret Password</Label>
+                <div className="relative">
+                  <Input
+                    type={showGlobalReceiptPassword ? 'text' : 'password'}
+                    placeholder="Secret Password"
+                    value={globalReceiptLookup.secretPassword}
+                    onChange={(e) => setGlobalReceiptLookup({ ...globalReceiptLookup, secretPassword: e.target.value })}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGlobalReceiptPassword((prev) => !prev)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    aria-label={showGlobalReceiptPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showGlobalReceiptPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-red-500 font-medium">Enter the secret password used for the house plan purchase.</p>
+                <button
+                  type="button"
+                  onClick={handleGlobalForgotSecretPassword}
+                  disabled={isGlobalForgotPasswordLoading}
+                  className="text-xs text-primary font-semibold hover:underline disabled:text-muted-foreground"
+                >
+                  {isGlobalForgotPasswordLoading ? 'Requesting help...' : 'Forgotten secret password?'}
+                </button>
+              </div>
+              {globalReceiptError && (
+                <p className="text-sm text-red-600">{globalReceiptError}</p>
+              )}
+              {isGlobalReceiptLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+                  Creating payment receipt...
+                </div>
+              )}
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={handleGlobalReceiptLookup}
+                  disabled={isGlobalReceiptLoading}
+                  className="text-primary font-semibold hover:underline disabled:text-muted-foreground"
+                >
+                  {isGlobalReceiptLoading ? 'Preparing...' : 'Dowload receipt'}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       {showReceiptBanner && receiptPurchaseId && (
         <div className="bg-emerald-50 border-b border-emerald-200 text-emerald-900">
           <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">

@@ -715,6 +715,33 @@ def purchase_receipt_lookup(request):
     return Response({'detail': 'No matching purchase found. Please complete a house plan purchase first.'}, status=status.HTTP_404_NOT_FOUND)
 
 
+@api_view(['POST'])
+def purchase_phone_summary(request):
+    data = request.data if isinstance(request.data, dict) else {}
+    phone_number = _normalize_phone_number(data.get('phone_number') or data.get('phone') or '')
+
+    if not phone_number:
+        return Response({'detail': 'Phone number is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if len(phone_number) != 10:
+        return Response({'detail': 'Phone number must be exactly 10 digits. Please check for missing or extra digits.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    purchase = Purchase.objects.filter(phone_number=phone_number).order_by('-created_at').first()
+    if not purchase:
+        return Response({'detail': 'No matching purchase found. Please complete a house plan purchase first.'}, status=status.HTTP_404_NOT_FOUND)
+
+    frontend_base = _get_frontend_base(request)
+    data = {
+        'full_name': purchase.full_name,
+        'email': purchase.email,
+        'phone_number': purchase.phone_number,
+        'plan_title': purchase.house_plan.title,
+        'plan_price': str(purchase.plan_price),
+        'plan_url': f"{frontend_base}/house-details/{purchase.house_plan.id}",
+    }
+    return Response(data)
+
+
 @api_view(['GET'])
 def purchase_receipt(request, purchase_id):
     if not _validate_signature(request, purchase_id, 'receipt'):
