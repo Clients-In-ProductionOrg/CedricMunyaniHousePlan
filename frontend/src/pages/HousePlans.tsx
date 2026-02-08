@@ -84,6 +84,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
     name: '', 
     email: '', 
     phone: '',
+    secretPassword: '',
     province: '',
     city: '',
     pickupPoint: '',
@@ -448,6 +449,16 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                       />
                    </div>
 
+                   <div className="space-y-2">
+                     <Label>Secret Password</Label>
+                     <Input 
+                       type="password"
+                       placeholder="Enter secret password" 
+                       value={contactInfo.secretPassword}
+                       onChange={(e) => setContactInfo({...contactInfo, secretPassword: e.target.value})}
+                     />
+                   </div>
+
                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                          <Label>Province</Label>
@@ -491,7 +502,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                     size="lg"
                     className="flex-1 text-base font-semibold" 
                     onClick={() => {
-                        if (!contactInfo.name || !contactInfo.email || !contactInfo.phone) {
+                        if (!contactInfo.name || !contactInfo.email || !contactInfo.phone || !contactInfo.secretPassword) {
                           alert('Please fill in all required fields');
                           return;
                         }
@@ -567,7 +578,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                 onClick={() => {
                   setShowSuccessModal(false);
                   setShowBuyModal(false);
-                  setContactInfo({ name: '', email: '', phone: '', province: '', city: '', pickupPoint: '', areaMall: '' });
+                  setContactInfo({ name: '', email: '', phone: '', secretPassword: '', province: '', city: '', pickupPoint: '', areaMall: '' });
                   setPaymentInfo({ cardNumber: '', expiryDate: '', cvv: '' });
                 }}
               >
