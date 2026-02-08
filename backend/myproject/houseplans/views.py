@@ -5,9 +5,12 @@ from rest_framework.response import Response
 from django.conf import settings
 from django.utils import timezone
 from urllib.parse import quote
+import logging
 import requests
 from datetime import datetime
 from .models import HousePlan, HousePlanImage, Floor, Room, Feature, Amenity, QuoteRequest, ContactMessage, Purchase, SiteSettings
+
+logger = logging.getLogger(__name__)
 from .serializers import (
     HousePlanDetailSerializer, 
     HousePlanListSerializer,
@@ -391,6 +394,7 @@ def purchase_success(request, purchase_id):
 def purchase_cancel(request, purchase_id):
     """Handle cancel redirects from Yoco checkout."""
     purchase = get_object_or_404(Purchase, pk=purchase_id)
+    logger.info("Yoco cancel redirect received", extra={"purchase_id": purchase_id, "current_status": purchase.payment_status})
     return _update_status_and_redirect(purchase, 'cancelled', request)
 
 
