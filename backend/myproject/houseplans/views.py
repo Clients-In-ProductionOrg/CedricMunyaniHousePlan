@@ -4,7 +4,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from urllib.parse import quote
 import hashlib
@@ -130,12 +130,19 @@ def create_purchase(request):
                 'error': 'Secret password is required'
             }, status=status.HTTP_400_BAD_REQUEST)
         
+        phone_number = _normalize_phone_number(data.get('phone_number') or '')
+        if len(phone_number) != 10:
+            return Response({
+                'success': False,
+                'error': 'Phone number must be exactly 10 digits. Please check for missing or extra digits.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         purchase = Purchase.objects.create(
             house_plan=house_plan,
             plan_price=house_plan.price,
             full_name=data.get('full_name'),
             email=data.get('email'),
-            phone_number=data.get('phone_number'),
+            phone_number=phone_number,
             province=data.get('province'),
             city=data.get('city'),
             pick_up_point=data.get('pick_up_point', ''),
@@ -289,6 +296,10 @@ def _get_frontend_base(request) -> str:
     if origin:
         return origin.rstrip('/')
     return request.build_absolute_uri('/').rstrip('/')
+
+
+def _normalize_phone_number(phone: str) -> str:
+    return ''.join(char for char in str(phone) if char.isdigit())
 
 
 def _build_signature(purchase_id: str, action: str, return_url: str, expires: int) -> str:
@@ -664,6 +675,36 @@ def purchase_receipt_link(request, purchase_id):
     return_url = f"{frontend_base}/house-plans?receipt=ready&purchase_id={purchase.public_id}"
     url = _build_signed_receipt_url(request, purchase.public_id, return_url)
     return Response({'url': url})
+
+
+@api_view(['POST'])
+def purchase_receipt_lookup(request):
+    data = request.data if isinstance(request.data, dict) else {}
+    phone_number = _normalize_phone_number(data.get('phone_number') or data.get('phone') or '')
+    secret_password = (data.get('secret_password') or '').strip()
+    return_path = (data.get('return_path') or '').strip()
+
+    if not phone_number or not secret_password:
+        return Response({'detail': 'Phone number and secret password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if len(phone_number) != 10:
+        return Response({'detail': 'Phone number must be exactly 10 digits. Please check for missing or extra digits.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    purchases = Purchase.objects.filter(phone_number=phone_number).order_by('-created_at')
+    for purchase in purchases:
+        if not purchase.secret_password_hash:
+            continue
+        if check_password(secret_password, purchase.secret_password_hash):
+            if purchase.payment_status != 'completed':
+                return Response({'detail': 'Payment not completed. Please complete your purchase to download the receipt.'}, status=status.HTTP_403_FORBIDDEN)
+
+            frontend_base = _get_frontend_base(request)
+            safe_path = return_path if return_path.startswith('/') else '/house-plans'
+            return_url = f"{frontend_base}{safe_path}"
+            url = _build_signed_receipt_url(request, purchase.public_id, return_url)
+            return Response({'url': url, 'purchase_id': purchase.public_id})
+
+    return Response({'detail': 'No matching purchase found. Please complete a house plan purchase first.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['GET'])

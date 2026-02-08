@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Square, ArrowRight, Share2, Eye, EyeOff } from 'lucide-react';
+import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Square, ArrowRight, Share2, Download, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,7 +45,6 @@ function convertYoutubeUrl(url: string): string {
   if (url.includes('youtube.com/embed/')) {
     return url;
   }
-  
   // Extract video ID from various YouTube URL formats
   let videoId = '';
   
@@ -80,6 +79,11 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptLookup, setReceiptLookup] = useState({ phone: '', secretPassword: '' });
+  const [receiptLookupError, setReceiptLookupError] = useState<string | null>(null);
+  const [isReceiptLookupLoading, setIsReceiptLookupLoading] = useState(false);
+  const [showReceiptPassword, setShowReceiptPassword] = useState(false);
   const [contactInfo, setContactInfo] = useState({ 
     name: '', 
     email: '', 
@@ -95,6 +99,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPasswordMismatch, setShowPasswordMismatch] = useState(false);
   const [missingFields, setMissingFields] = useState<Record<string, boolean>>({});
+  const [phoneValidationError, setPhoneValidationError] = useState<string | null>(null);
   const [paymentInfo, setPaymentInfo] = useState({ 
     cardNumber: '', 
     expiryDate: '', 
@@ -171,6 +176,51 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
       images: plan.images
     });
     setIsGalleryOpen(true);
+  };
+
+  const normalizePhone = (value: string) => value.replace(/\D/g, '');
+
+  const handleDownload = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setReceiptLookup({ phone: '', secretPassword: '' });
+    setReceiptLookupError(null);
+    setShowReceiptModal(true);
+  };
+
+  const handleReceiptLookup = async () => {
+    if (!receiptLookup.phone || !receiptLookup.secretPassword) {
+      setReceiptLookupError('Please enter your phone number and secret password.');
+      return;
+    }
+
+    setIsReceiptLookupLoading(true);
+    setReceiptLookupError(null);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/purchase/receipt-lookup/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone_number: receiptLookup.phone,
+          secret_password: receiptLookup.secretPassword,
+          return_path: `${window.location.pathname}${window.location.search}`,
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.url) {
+        throw new Error(data.detail || 'Unable to download receipt.');
+      }
+
+      setShowReceiptModal(false);
+      window.location.href = data.url;
+    } catch (error: any) {
+      console.error('Receipt lookup error:', error);
+      setReceiptLookupError(error?.message || 'Unable to download receipt.');
+    } finally {
+      setIsReceiptLookupLoading(false);
+    }
   };
 
   const handleShareLink = async (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -288,6 +338,15 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                   >
                     <Share2 className="h-3.5 w-3.5" />
                   </button>
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/50 bg-background/80 text-muted-foreground transition-colors hover:text-primary hover:border-primary/40"
+                    aria-label="Download plan payment receipt"
+                    title="Download plan payment receipt"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </button>
                 </div>
              </div>
              <div className="text-right">
@@ -400,6 +459,79 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
         </div>
       )}
 
+        {showReceiptModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <Card className="w-full max-w-md border-2 border-primary/20 shadow-2xl animate-in zoom-in-95">
+              <div className="relative shrink-0 h-20 bg-primary/10 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-blue-600/20" />
+                <div className="absolute bottom-3 left-6">
+                  <h2 className="text-xl font-bold">Download Receipt</h2>
+                  <p className="text-sm text-muted-foreground">Enter your purchase details</p>
+                </div>
+                <button
+                  onClick={() => setShowReceiptModal(false)}
+                  className="absolute top-3 right-3 p-2 bg-background/50 hover:bg-background rounded-full transition-colors"
+                  aria-label="Close receipt modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <CardContent className="p-6 space-y-4">
+                <div className="space-y-2">
+                  <Label>Phone</Label>
+                  <Input
+                    type="tel"
+                    placeholder="e.g 0726659790"
+                    value={receiptLookup.phone}
+                    onChange={(e) => setReceiptLookup({ ...receiptLookup, phone: normalizePhone(e.target.value) })}
+                  />
+                  <p className="text-xs text-red-500 font-medium">Enter the phone number used for the purchase.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Secret Password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showReceiptPassword ? 'text' : 'password'}
+                      placeholder="Secret Password"
+                      value={receiptLookup.secretPassword}
+                      onChange={(e) => setReceiptLookup({ ...receiptLookup, secretPassword: e.target.value })}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowReceiptPassword((prev) => !prev)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      aria-label={showReceiptPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showReceiptPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-red-500 font-medium">Enter the secret password used for the house plan purchase.</p>
+                </div>
+                {receiptLookupError && (
+                  <p className="text-sm text-red-600">{receiptLookupError}</p>
+                )}
+                {isReceiptLookupLoading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+                    Creating payment receipt...
+                  </div>
+                )}
+                <div className="flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={handleReceiptLookup}
+                    disabled={isReceiptLookupLoading}
+                    className="text-primary font-semibold hover:underline disabled:text-muted-foreground"
+                  >
+                    {isReceiptLookupLoading ? 'Preparing...' : 'Dowload receipt'}
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
 
 
       {/* Buy Plan Modal - Yoco Style */}
@@ -459,22 +591,39 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                    </div>
 
                    <div className="space-y-2">
-                      <Label>Your Phone</Label>
-                      <Input 
-                         placeholder="Enter your phone number" 
+                     <Label>Phone</Label>
+                     <Input 
+                       placeholder="e.g 0726659790" 
                          value={contactInfo.phone}
                          onChange={(e) => {
-                           setContactInfo({...contactInfo, phone: e.target.value});
+                           const normalizedPhone = normalizePhone(e.target.value);
+                           setContactInfo({...contactInfo, phone: normalizedPhone});
                            if (missingFields.phone) {
                              setMissingFields({ ...missingFields, phone: false });
                            }
+                           if (normalizedPhone.length === 0) {
+                             setPhoneValidationError(null);
+                           } else if (normalizedPhone.length !== 10) {
+                             setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+                           } else {
+                             setPhoneValidationError(null);
+                           }
                          }}
-                         className={missingFields.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                         onBlur={() => {
+                           if (contactInfo.phone && contactInfo.phone.length !== 10) {
+                             setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+                           }
+                         }}
+                         className={missingFields.phone || phoneValidationError ? 'border-red-500 focus-visible:ring-red-500' : ''}
                       />
+                      {phoneValidationError && (
+                        <p className="text-sm text-red-600">{phoneValidationError}</p>
+                      )}
                    </div>
 
                    <div className="space-y-2">
                      <Label>Secret Password</Label>
+                     <p className="text-xs text-red-500 font-medium mt-1">This secret password is required to download your payment receipt. Please keep it safe.</p>
                      <div className="relative">
                        <Input 
                          type={showSecretPassword ? 'text' : 'password'}
@@ -631,6 +780,10 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                         if (!contactInfo.areaMall) nextMissing.areaMall = true;
                         setMissingFields(nextMissing);
                         if (Object.keys(nextMissing).length > 0) {
+                          return;
+                        }
+                        if (contactInfo.phone.length !== 10) {
+                          setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
                           return;
                         }
                         if (contactInfo.secretPassword !== contactInfo.confirmPassword) {

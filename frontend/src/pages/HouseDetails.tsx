@@ -73,6 +73,7 @@ export const HouseDetails = () => {
    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
    const [showPasswordMismatch, setShowPasswordMismatch] = useState(false);
    const [missingFields, setMissingFields] = useState<Record<string, boolean>>({});
+   const [phoneValidationError, setPhoneValidationError] = useState<string | null>(null);
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
    const [receiptPurchaseId, setReceiptPurchaseId] = useState<string | null>(null);
@@ -257,6 +258,8 @@ export const HouseDetails = () => {
       [floorNumber]: !prev[floorNumber]
     }));
   };
+
+    const normalizePhone = (value: string) => value.replace(/\D/g, '');
 
   const propertyFeatures = [
     { label: 'Bedrooms', value: plan.bedrooms, icon: BedDouble },
@@ -795,22 +798,39 @@ export const HouseDetails = () => {
                     </div>
 
                     <div className="space-y-2">
-                       <Label>Your Phone</Label>
+                       <Label>Phone</Label>
                        <Input 
-                          placeholder="Enter your phone number" 
+                          placeholder="e.g 0726659790" 
                           value={contactInfo.phone}
                                        onChange={e => {
-                                          setContactInfo({...contactInfo, phone: e.target.value});
+                                         const normalizedPhone = normalizePhone(e.target.value);
+                                         setContactInfo({...contactInfo, phone: normalizedPhone});
                                           if (missingFields.phone) {
                                              setMissingFields({ ...missingFields, phone: false });
                                           }
+                                          if (normalizedPhone.length === 0) {
+                                             setPhoneValidationError(null);
+                                          } else if (normalizedPhone.length !== 10) {
+                                             setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+                                          } else {
+                                             setPhoneValidationError(null);
+                                          }
                                        }}
-                                       className={missingFields.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                                       onBlur={() => {
+                                          if (contactInfo.phone && contactInfo.phone.length !== 10) {
+                                             setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+                                          }
+                                       }}
+                                       className={missingFields.phone || phoneValidationError ? 'border-red-500 focus-visible:ring-red-500' : ''}
                        />
+                       {phoneValidationError && (
+                          <p className="text-sm text-red-600">{phoneValidationError}</p>
+                       )}
                     </div>
 
                     <div className="space-y-2">
                        <Label>Secret Password</Label>
+                       <p className="text-xs text-red-500 font-medium mt-1">This secret password is required to download your payment receipt. Please keep it safe.</p>
                        <div className="relative">
                           <Input 
                              type={showSecretPassword ? 'text' : 'password'}
@@ -967,6 +987,10 @@ export const HouseDetails = () => {
                                   if (!contactInfo.areaMall) nextMissing.areaMall = true;
                                   setMissingFields(nextMissing);
                                   if (Object.keys(nextMissing).length > 0) {
+                                     return;
+                                  }
+                                  if (contactInfo.phone.length !== 10) {
+                                     setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
                                      return;
                                   }
                                   if (contactInfo.secretPassword !== contactInfo.confirmPassword) {
