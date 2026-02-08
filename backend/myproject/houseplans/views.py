@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.conf import settings
 from django.utils import timezone
+from urllib.parse import quote
 import requests
 from datetime import datetime
 from .models import HousePlan, HousePlanImage, Floor, Room, Feature, Amenity, QuoteRequest, ContactMessage, Purchase, SiteSettings
@@ -266,11 +267,19 @@ def create_checkout(request):
     try:
         data = request.data
         purchase_id = data.get('purchase_id')
-        success_url = data.get('success_url')
-        cancel_url = data.get('cancel_url')
-        failure_url = data.get('failure_url')
 
         purchase = Purchase.objects.get(pk=purchase_id)
+
+        backend_base = request.build_absolute_uri('/').rstrip('/')
+        frontend_base = getattr(settings, 'FRONTEND_URL', None) or request.headers.get('Origin') or backend_base
+
+        success_return_url = f"{frontend_base}/house-plans?checkout=success&purchase_id={purchase.id}"
+        cancel_return_url = f"{frontend_base}/house-plans?checkout=cancel&purchase_id={purchase.id}"
+        failure_return_url = f"{frontend_base}/house-plans?checkout=failure&purchase_id={purchase.id}"
+
+        success_url = f"{backend_base}/api/purchase/{purchase.id}/success/?return_url={quote(success_return_url, safe='')}"
+        cancel_url = f"{backend_base}/api/purchase/{purchase.id}/cancel/?return_url={quote(cancel_return_url, safe='')}"
+        failure_url = f"{backend_base}/api/purchase/{purchase.id}/failure/?return_url={quote(failure_return_url, safe='')}"
 
         yoco_url = 'https://payments.yoco.com/api/checkouts'
         headers = {
