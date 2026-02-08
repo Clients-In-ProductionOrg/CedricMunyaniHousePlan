@@ -74,6 +74,10 @@ export const HouseDetails = () => {
    const [showPasswordMismatch, setShowPasswordMismatch] = useState(false);
    const [missingFields, setMissingFields] = useState<Record<string, boolean>>({});
    const [phoneValidationError, setPhoneValidationError] = useState<string | null>(null);
+   const [purchaseError, setPurchaseError] = useState<string | null>(null);
+   const [showPurchaseErrorModal, setShowPurchaseErrorModal] = useState(false);
+   const [purchaseErrorModalMessage, setPurchaseErrorModalMessage] = useState('');
+   const secretPasswordInputRef = useRef<HTMLInputElement | null>(null);
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
    const [receiptPurchaseId, setReceiptPurchaseId] = useState<string | null>(null);
@@ -261,6 +265,14 @@ export const HouseDetails = () => {
 
     const normalizePhone = (value: string) => value.replace(/\D/g, '');
 
+   const handlePurchaseErrorOk = () => {
+      setShowPurchaseErrorModal(false);
+      setShowBuyModal(true);
+      requestAnimationFrame(() => {
+         secretPasswordInputRef.current?.focus();
+      });
+   };
+
   const propertyFeatures = [
     { label: 'Bedrooms', value: plan.bedrooms, icon: BedDouble },
     { label: 'Bathrooms', value: plan.bathrooms, icon: Bath },
@@ -291,11 +303,15 @@ export const HouseDetails = () => {
 
          const purchaseData = await purchaseResponse.json();
          if (!purchaseData.id) {
-            alert('Error creating purchase. Please try again.');
+            const errorMessage = purchaseData.error || purchaseData.detail || 'Error creating purchase. Please try again.';
+            setPurchaseError(errorMessage);
+            setPurchaseErrorModalMessage(errorMessage);
+            setShowPurchaseErrorModal(true);
             return;
          }
 
          const purchaseIdentifier = purchaseData.public_id || purchaseData.id;
+         setShowBuyModal(false);
          const origin = window.location.origin;
          const basePath = `${origin}/house-details/${plan.id}`;
          const successReturnUrl = `${basePath}?checkout=success&purchase_id=${purchaseIdentifier}`;
@@ -853,6 +869,7 @@ export const HouseDetails = () => {
                                }
                              }}
                                            className={`pr-10 ${missingFields.secretPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                             ref={secretPasswordInputRef}
                           />
                           <button
                              type="button"
@@ -969,12 +986,17 @@ export const HouseDetails = () => {
                          {Object.values(missingFields).some(Boolean) && (
                               <p className="text-sm text-red-600">Please fill in all required fields.</p>
                          )}
+                        {purchaseError && (
+                           <p className="text-sm text-red-600">{purchaseError}</p>
+                        )}
 
                  <div className="flex gap-3 pt-2">
                     <Button 
                      size="lg"
                      className="flex-1 text-base font-semibold" 
                      onClick={() => {
+                                  setShowPurchaseErrorModal(false);
+                                  setPurchaseError(null);
                                   const nextMissing: Record<string, boolean> = {};
                                   if (!contactInfo.name) nextMissing.name = true;
                                   if (!contactInfo.email) nextMissing.email = true;
@@ -1017,6 +1039,34 @@ export const HouseDetails = () => {
            </Card>
         </div>
       )}
+
+         {showPurchaseErrorModal && (
+            <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+               <Card className="w-full max-w-md bg-white">
+                  <div className="p-6">
+                     <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold">Action Required</h3>
+                        <button
+                           onClick={handlePurchaseErrorOk}
+                           className="text-gray-500 hover:text-gray-700"
+                           aria-label="Close error modal"
+                        >
+                           <X className="w-5 h-5" />
+                        </button>
+                     </div>
+                     <p className="text-sm text-red-600">{purchaseErrorModalMessage}</p>
+                     <div className="mt-6 flex justify-end">
+                        <Button
+                           size="sm"
+                           onClick={handlePurchaseErrorOk}
+                        >
+                           Ok
+                        </Button>
+                     </div>
+                  </div>
+               </Card>
+            </div>
+         )}
     </div>
   );
 };

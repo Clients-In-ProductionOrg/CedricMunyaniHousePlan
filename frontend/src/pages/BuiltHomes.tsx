@@ -67,6 +67,10 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
   const [showPasswordMismatch, setShowPasswordMismatch] = useState(false);
   const [missingFields, setMissingFields] = useState<Record<string, boolean>>({});
   const [phoneValidationError, setPhoneValidationError] = useState<string | null>(null);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [showPurchaseErrorModal, setShowPurchaseErrorModal] = useState(false);
+  const [purchaseErrorModalMessage, setPurchaseErrorModalMessage] = useState('');
+  const secretPasswordInputRef = useRef<HTMLInputElement | null>(null);
   const [paymentInfo, setPaymentInfo] = useState({ 
     cardNumber: '', 
     expiryDate: '', 
@@ -119,6 +123,14 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
   };
 
   const normalizePhone = (value: string) => value.replace(/\D/g, '');
+
+  const handlePurchaseErrorOk = () => {
+    setShowPurchaseErrorModal(false);
+    setShowBuyModal(true);
+    requestAnimationFrame(() => {
+      secretPasswordInputRef.current?.focus();
+    });
+  };
 
   const handleShareLink = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -554,6 +566,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                         }
                       }}
                       className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm pr-10 ${missingFields.secretPassword ? 'border-red-500' : ''}`}
+                      ref={secretPasswordInputRef}
                     />
                     <button
                       type="button"
@@ -650,6 +663,9 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                   {Object.values(missingFields).some(Boolean) && (
                     <p className="text-xs text-red-600 mt-2">Please fill in all required fields.</p>
                   )}
+                  {purchaseError && (
+                    <p className="text-xs text-red-600 mt-2">{purchaseError}</p>
+                  )}
                 </div>
               </div>
 
@@ -660,6 +676,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                   onClick={async () => {
                     // Save purchase to database
                     try {
+                      setPurchaseError(null);
                       const nextMissing: Record<string, boolean> = {};
                       if (!contactInfo.name) nextMissing.name = true;
                       if (!contactInfo.email) nextMissing.email = true;
@@ -710,11 +727,16 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                         // Trigger Yoco payment directly with v2 API
                         await handleCheckoutPayment(plan, purchaseIdentifier);
                       } else {
-                        alert('Error saving purchase: ' + data.error);
+                        const errorMessage = data.error || data.detail || 'Error saving purchase. Please try again.';
+                        setPurchaseError(errorMessage);
+                        setPurchaseErrorModalMessage(errorMessage);
+                        setShowPurchaseErrorModal(true);
                       }
                     } catch (error) {
                       console.error('Error:', error);
-                      alert('Error saving purchase');
+                      setPurchaseError('Error saving purchase. Please try again.');
+                      setPurchaseErrorModalMessage('Error saving purchase. Please try again.');
+                      setShowPurchaseErrorModal(true);
                     }
                   }}
                 >
@@ -726,6 +748,34 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                   onClick={() => setShowBuyModal(false)}
                 >
                   Cancel
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {showPurchaseErrorModal && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+          <Card className="w-full max-w-md bg-white">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Action Required</h3>
+                <button
+                  onClick={handlePurchaseErrorOk}
+                  className="text-gray-500 hover:text-gray-700"
+                  aria-label="Close error modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-sm text-red-600">{purchaseErrorModalMessage}</p>
+              <div className="mt-6 flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={handlePurchaseErrorOk}
+                >
+                  Ok
                 </Button>
               </div>
             </div>

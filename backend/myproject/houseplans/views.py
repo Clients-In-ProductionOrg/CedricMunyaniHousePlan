@@ -137,6 +137,14 @@ def create_purchase(request):
                 'error': 'Phone number must be exactly 10 digits. Please check for missing or extra digits.'
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        existing_purchases = Purchase.objects.filter(phone_number=phone_number)
+        for existing_purchase in existing_purchases:
+            if existing_purchase.secret_password_hash and check_password(secret_password, existing_purchase.secret_password_hash):
+                return Response({
+                    'success': False,
+                    'error': 'This secret password has already been used for a previous purchase. Please choose a different secret password.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
         purchase = Purchase.objects.create(
             house_plan=house_plan,
             plan_price=house_plan.price,

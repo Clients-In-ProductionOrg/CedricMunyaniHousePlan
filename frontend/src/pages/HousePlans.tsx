@@ -100,6 +100,10 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
   const [showPasswordMismatch, setShowPasswordMismatch] = useState(false);
   const [missingFields, setMissingFields] = useState<Record<string, boolean>>({});
   const [phoneValidationError, setPhoneValidationError] = useState<string | null>(null);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [showPurchaseErrorModal, setShowPurchaseErrorModal] = useState(false);
+  const [purchaseErrorModalMessage, setPurchaseErrorModalMessage] = useState('');
+  const secretPasswordInputRef = useRef<HTMLInputElement | null>(null);
   const [paymentInfo, setPaymentInfo] = useState({ 
     cardNumber: '', 
     expiryDate: '', 
@@ -130,11 +134,15 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
 
       const purchaseData = await purchaseResponse.json();
       if (!purchaseData.id) {
-        alert('Error creating purchase. Please try again.');
+        const errorMessage = purchaseData.error || purchaseData.detail || 'Error creating purchase. Please try again.';
+        setPurchaseError(errorMessage);
+        setPurchaseErrorModalMessage(errorMessage);
+        setShowPurchaseErrorModal(true);
         return;
       }
 
       const purchaseIdentifier = purchaseData.public_id || purchaseData.id;
+      setShowBuyModal(false);
       const origin = window.location.origin;
       const successReturnUrl = `${origin}/house-plans?checkout=success&purchase_id=${purchaseIdentifier}`;
       const cancelReturnUrl = `${origin}/house-plans?checkout=cancel&purchase_id=${purchaseIdentifier}`;
@@ -179,6 +187,14 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
   };
 
   const normalizePhone = (value: string) => value.replace(/\D/g, '');
+
+  const handlePurchaseErrorOk = () => {
+    setShowPurchaseErrorModal(false);
+    setShowBuyModal(true);
+    requestAnimationFrame(() => {
+      secretPasswordInputRef.current?.focus();
+    });
+  };
 
   const handleDownload = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -646,6 +662,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                           }
                          }}
                             className={`pr-10 ${missingFields.secretPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          ref={secretPasswordInputRef}
                        />
                        <button
                          type="button"
@@ -759,15 +776,20 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                    </div>
                 </div>
 
-                {Object.values(missingFields).some(Boolean) && (
+                 {Object.values(missingFields).some(Boolean) && (
                    <p className="text-sm text-red-600">Please fill in all required fields.</p>
-                )}
+                 )}
+                 {purchaseError && (
+                   <p className="text-sm text-red-600">{purchaseError}</p>
+                 )}
 
                 <div className="flex gap-3 pt-2">
                    <Button 
                     size="lg"
                     className="flex-1 text-base font-semibold" 
                     onClick={() => {
+                      setPurchaseError(null);
+                      setShowPurchaseErrorModal(false);
                         const nextMissing: Record<string, boolean> = {};
                         if (!contactInfo.name) nextMissing.name = true;
                         if (!contactInfo.email) nextMissing.email = true;
@@ -807,6 +829,34 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                    </Button>
                 </div>
              </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {showPurchaseErrorModal && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+          <Card className="w-full max-w-md bg-white">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Action Required</h3>
+                <button
+                  onClick={handlePurchaseErrorOk}
+                  className="text-gray-500 hover:text-gray-700"
+                  aria-label="Close error modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-sm text-red-600">{purchaseErrorModalMessage}</p>
+              <div className="mt-6 flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={handlePurchaseErrorOk}
+                >
+                  Ok
+                </Button>
+              </div>
+            </div>
           </Card>
         </div>
       )}
