@@ -123,9 +123,13 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
       }
 
       const origin = window.location.origin;
-      const successUrl = `${origin}/house-plans?checkout=success&purchase_id=${purchaseData.id}`;
-      const cancelUrl = `${origin}/house-plans?checkout=cancel&purchase_id=${purchaseData.id}`;
-      const failureUrl = `${origin}/house-plans?checkout=failure&purchase_id=${purchaseData.id}`;
+      const successReturnUrl = `${origin}/house-plans?checkout=success&purchase_id=${purchaseData.id}`;
+      const cancelReturnUrl = `${origin}/house-plans?checkout=cancel&purchase_id=${purchaseData.id}`;
+      const failureReturnUrl = `${origin}/house-plans?checkout=failure&purchase_id=${purchaseData.id}`;
+
+      const successUrl = `${BACKEND_URL}/api/purchase/${purchaseData.id}/success/?return_url=${encodeURIComponent(successReturnUrl)}`;
+      const cancelUrl = `${BACKEND_URL}/api/purchase/${purchaseData.id}/cancel/?return_url=${encodeURIComponent(cancelReturnUrl)}`;
+      const failureUrl = `${BACKEND_URL}/api/purchase/${purchaseData.id}/failure/?return_url=${encodeURIComponent(failureReturnUrl)}`;
 
       const checkoutResponse = await fetch(`${BACKEND_URL}/api/create-checkout/`, {
         method: 'POST',

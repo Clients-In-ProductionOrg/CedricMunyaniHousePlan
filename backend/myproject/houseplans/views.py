@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -238,6 +238,28 @@ def _extract_event_status(payload: dict) -> str:
     return ''
 
 
+def _get_return_url(request) -> str:
+    return_url = request.query_params.get('return_url')
+    if return_url:
+        return return_url
+    return settings.FRONTEND_URL
+
+
+def _update_status_and_redirect(purchase: Purchase, status_value: str, request):
+    if status_value in {'succeeded', 'successful', 'completed', 'paid'}:
+        purchase.payment_status = 'completed'
+        purchase.payment_date = purchase.payment_date or timezone.now()
+    elif status_value in {'cancelled', 'canceled'}:
+        purchase.payment_status = 'cancelled'
+    elif status_value == 'failed':
+        purchase.payment_status = 'failed'
+    else:
+        purchase.payment_status = 'pending'
+
+    purchase.save(update_fields=['payment_status', 'payment_date', 'updated_at'])
+    return redirect(_get_return_url(request))
+
+
 @api_view(['POST'])
 def create_checkout(request):
     """Create a Yoco Checkout session and return redirect URL"""
@@ -344,6 +366,30 @@ def yoco_webhook(request):
 
     _sync_purchase_with_yoco(purchase)
     return Response({'received': True})
+
+
+@api_view(['GET'])
+def purchase_success(request, purchase_id):
+    """Handle success redirects from Yoco checkout."""
+    purchase = get_object_or_404(Purchase, pk=purchase_id)
+    _sync_purchase_with_yoco(purchase)
+    if purchase.payment_status == 'completed':
+        return redirect(_get_return_url(request))
+    return _update_status_and_redirect(purchase, 'completed', request)
+
+
+@api_view(['GET'])
+def purchase_cancel(request, purchase_id):
+    """Handle cancel redirects from Yoco checkout."""
+    purchase = get_object_or_404(Purchase, pk=purchase_id)
+    return _update_status_and_redirect(purchase, 'cancelled', request)
+
+
+@api_view(['GET'])
+def purchase_failure(request, purchase_id):
+    """Handle failure redirects from Yoco checkout."""
+    purchase = get_object_or_404(Purchase, pk=purchase_id)
+    return _update_status_and_redirect(purchase, 'failed', request)
 
 
 @api_view(['POST'])
