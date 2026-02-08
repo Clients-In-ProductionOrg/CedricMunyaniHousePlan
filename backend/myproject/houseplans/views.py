@@ -13,6 +13,11 @@ import time
 import io
 from reportlab.lib.pagesizes import LETTER
 from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_RIGHT, TA_CENTER, TA_LEFT
 import requests
 from datetime import datetime
 from .models import HousePlan, HousePlanImage, Floor, Room, Feature, Amenity, QuoteRequest, ContactMessage, Purchase, SiteSettings
@@ -328,42 +333,165 @@ def _validate_signature(request, purchase_id: str, action: str) -> bool:
 
 def _build_receipt_pdf(purchase: Purchase, frontend_base: str) -> bytes:
     buffer = io.BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=LETTER)
-    width, height = LETTER
+    
+    # Create the PDF object, using the buffer as its "file."
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=LETTER,
+        rightMargin=40,
+        leftMargin=40,
+        topMargin=40,
+        bottomMargin=40,
+        title=f"Receipt-{purchase.public_id}"
+    )
 
-    pdf.setTitle("Cedric Houseplan Receipt")
-    pdf.setFont("Helvetica-Bold", 16)
-    pdf.drawString(40, height - 50, "Cedric Houseplan - Payment Receipt")
+    # Styles
+    styles = getSampleStyleSheet()
+    
+    # Custom colors
+    TEAL = colors.HexColor("#00B4D8")
+    DARK_GREY = colors.HexColor("#333333")
+    LIGHT_GREY = colors.HexColor("#F5F5F5")
+    
+    # Custom Styles
+    styles.add(ParagraphStyle(name='HeaderTitle', parent=styles['Heading1'], fontSize=24, textColor=TEAL, spaceAfter=20))
+    styles.add(ParagraphStyle(name='SectionTitle', parent=styles['Heading3'], fontSize=12, textColor=DARK_GREY, spaceAfter=5))
+    styles.add(ParagraphStyle(name='NormalSmall', parent=styles['Normal'], fontSize=10, textColor=DARK_GREY, leading=14))
+    styles.add(ParagraphStyle(name='TableText', parent=styles['Normal'], fontSize=10, textColor=DARK_GREY))
+    styles.add(ParagraphStyle(name='FooterText', parent=styles['Normal'], fontSize=8, textColor=colors.grey, alignment=TA_CENTER))
 
-    pdf.setFont("Helvetica", 11)
-    y = height - 90
-    line_height = 18
+    elements = []
 
-    houseplan_url = f"{frontend_base}/house-details/{purchase.house_plan.id}"
+    # --- Header Section ---
+    # Title
+    elements.append(Paragraph("PAYMENT RECEIPT", styles['HeaderTitle']))
+    
+    # Line
+    line_data = [[""]]
+    line_table = Table(line_data, colWidths=[7.5*inch])
+    line_table.setStyle(TableStyle([
+        ('LINEBELOW', (0, 0), (-1, -1), 2, TEAL),
+    ]))
+    elements.append(line_table)
+    elements.append(Spacer(1, 20))
 
-    lines = [
-        f"Receipt ID: {purchase.public_id}",
-        f"Full Name: {purchase.full_name}",
-        f"House Plan: {purchase.house_plan.title}",
-        f"Plan Price: R{purchase.plan_price}",
-        f"Email: {purchase.email}",
-        f"Phone Number: {purchase.phone_number}",
-        f"Pick up point: {purchase.pick_up_point or '-'}",
-        f"Area mall: {purchase.area_mall or '-'}",
-        f"House plan link: {houseplan_url}",
+    # --- Info Section (Company and Order Info) ---
+    company_info_text = """
+    <b>Cedric House Plans</b><br/>
+    Zimbabwe<br/>
+    contact@cedricmunyani.com
+    """
+    
+    payment_date = purchase.payment_date or purchase.created_at
+    formatted_date = payment_date.strftime("%d %B %Y")
+    
+    order_info_text = f"""
+    <b>Receipt ID:</b> {purchase.public_id}<br/>
+    <b>Date:</b> {formatted_date}<br/>
+    <b>Status:</b> {str(purchase.payment_status).title()}
+    """
+    
+    info_data = [[
+        Paragraph(company_info_text, styles['NormalSmall']),
+        Paragraph(order_info_text, styles['NormalSmall'])
+    ]]
+    
+    info_table = Table(info_data, colWidths=[4*inch, 3.5*inch])
+    info_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('ALIGN', (1,0), (1,0), 'RIGHT'), # Align order info to right
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 30))
+    
+    # --- Customer Section ---
+    customer_info_text = f"""
+    <b>Bill To:</b><br/>
+    {purchase.full_name}<br/>
+    {purchase.email}<br/>
+    {purchase.phone_number}
+    """
+    if purchase.pick_up_point:
+        customer_info_text += f"<br/>Pickup: {purchase.pick_up_point}"
+    if purchase.area_mall:
+        customer_info_text += f" ({purchase.area_mall})"
+
+    elements.append(Paragraph(customer_info_text, styles['NormalSmall']))
+    elements.append(Spacer(1, 20))
+
+    # --- Items Table ---
+    # Header
+    table_headers = ["Item Description", "Type", "Price"]
+    
+    # Data Row
+    house_plan = purchase.house_plan
+    plan_url = f"{frontend_base}/house-details/{house_plan.id}"
+    
+    # Use standard text for description, ReportLab <a> tags can be finicky depending on version/context.
+    # We will put the link below the description or inline.
+    description_text = f"<b>{house_plan.title}</b><br/>Design #{house_plan.id}"
+    
+    item_row = [
+        Paragraph(description_text, styles['TableText']),
+        "Digital Download",
+        f"R {purchase.plan_price}"
     ]
+    
+    table_data = [table_headers, item_row]
+    
+    # Table Style
+    t = Table(table_data, colWidths=[4.5*inch, 1.5*inch, 1.5*inch])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), LIGHT_GREY),
+        ('TEXTCOLOR', (0, 0), (-1, 0), TEAL),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'), # Price right align
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TOPPADDING', (0, 0), (-1, 0), 12),
+        ('LINEBELOW', (0, 0), (-1, 0), 1, TEAL),
+        ('LINEBELOW', (0, 1), (-1, -1), 0.5, colors.grey),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('PADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 10))
+    
+    # --- Totals ---
+    total_data = [
+        ["Total", f"R {purchase.plan_price}"]
+    ]
+    total_table = Table(total_data, colWidths=[6*inch, 1.5*inch])
+    total_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (0, 0), (-1, -1), TEAL),
+        ('SIZE', (0, 0), (-1, -1), 12),
+    ]))
+    elements.append(total_table)
+    
+    # --- Link to Plan ---
+    elements.append(Spacer(1, 20))
+    link_paragraph = Paragraph(
+        f'Access your house plan here: <a href="{plan_url}" color="#00B4D8"><u>{plan_url}</u></a>',
+        styles['NormalSmall']
+    )
+    elements.append(link_paragraph)
+    
+    # --- Footer ---
+    elements.append(Spacer(1, 50))
+    footer_text = Paragraph(
+        "Thank you for your purchase. Please contact us if you have any questions.",
+        styles['FooterText']
+    )
+    elements.append(footer_text)
 
-    for line in lines:
-        pdf.drawString(40, y, line)
-        y -= line_height
-
-    pdf.setFont("Helvetica", 9)
-    pdf.drawString(40, 40, "Thank you for your purchase.")
-
-    pdf.showPage()
-    pdf.save()
-
-    return buffer.getvalue()
+    # Build PDF
+    doc.build(elements)
+    
+    buffer.seek(0)
+    return buffer.read()
 
 
 def _get_purchase_by_identifier(purchase_id: str) -> Purchase:
