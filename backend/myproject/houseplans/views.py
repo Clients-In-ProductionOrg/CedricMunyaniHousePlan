@@ -341,6 +341,7 @@ def _validate_signature(request, purchase_id: str, action: str) -> bool:
 
 def _build_receipt_pdf(purchase: Purchase, frontend_base: str) -> bytes:
     buffer = io.BytesIO()
+    site_settings = SiteSettings.get_settings()
     
     # Create the PDF object, using the buffer as its "file."
     doc = SimpleDocTemplate(
@@ -384,11 +385,17 @@ def _build_receipt_pdf(purchase: Purchase, frontend_base: str) -> bytes:
     elements.append(Spacer(1, 20))
 
     # --- Info Section (Company and Order Info) ---
-    company_info_text = """
-    <b>Cedric House Plans</b><br/>
-    Zimbabwe<br/>
-    contact@cedricmunyani.com
-    """
+    company_name = site_settings.company_name or "Cedric House Plans"
+    address_text = (site_settings.address or "").strip()
+    address_text = address_text.replace("\n", "<br/>") if address_text else ""
+    company_lines = [f"<b>{company_name}</b>"]
+    if address_text:
+        company_lines.append(address_text)
+    if site_settings.phone:
+        company_lines.append(site_settings.phone)
+    if site_settings.email:
+        company_lines.append(site_settings.email)
+    company_info_text = "<br/>".join(company_lines)
     
     payment_date = purchase.payment_date or purchase.created_at
     formatted_date = payment_date.strftime("%d %B %Y")
@@ -413,12 +420,15 @@ def _build_receipt_pdf(purchase: Purchase, frontend_base: str) -> bytes:
     elements.append(Spacer(1, 30))
     
     # --- Customer Section ---
-    customer_info_text = f"""
-    <b>Bill To:</b><br/>
-    {purchase.full_name}<br/>
-    {purchase.email}<br/>
-    {purchase.phone_number}
-    """
+    province_display = purchase.get_province_display() if purchase.province else ""
+    customer_info_text = (
+        f"<b>Bill To:</b><br/>"
+        f"{purchase.full_name}<br/>"
+        f"{purchase.email}<br/>"
+        f"{purchase.phone_number}"
+    )
+    if province_display:
+        customer_info_text += f"<br/>Province: {province_display}"
     if purchase.pick_up_point:
         customer_info_text += f"<br/>Pickup: {purchase.pick_up_point}"
     if purchase.area_mall:
