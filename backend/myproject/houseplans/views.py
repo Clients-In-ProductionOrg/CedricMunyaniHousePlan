@@ -541,6 +541,32 @@ def _update_status_and_redirect(purchase: Purchase, status_value: str, request):
     return redirect(_get_return_url(request))
 
 
+@api_view(['GET'])
+def purchase_summary(request, purchase_id: str):
+    """Return purchase summary details for WhatsApp message"""
+    purchase = _get_purchase_by_identifier(purchase_id)
+    frontend_base = _get_frontend_base(request)
+    payment_date = purchase.payment_date or purchase.created_at
+
+    data = {
+        'receipt_id': purchase.public_id,
+        'date': payment_date.strftime('%d %B %Y'),
+        'status': purchase.get_payment_status_display(),
+        'full_name': purchase.full_name,
+        'email': purchase.email,
+        'phone_number': purchase.phone_number,
+        'province': purchase.get_province_display() if purchase.province else '',
+        'pick_up_point': purchase.pick_up_point or '',
+        'area_mall': purchase.area_mall or '',
+        'plan_title': purchase.house_plan.title,
+        'plan_id': purchase.house_plan.id,
+        'plan_price': str(purchase.plan_price),
+        'plan_type': 'Digital Download',
+        'plan_url': f"{frontend_base}/house-details/{purchase.house_plan.id}",
+    }
+    return Response(data)
+
+
 @api_view(['POST'])
 def create_checkout(request):
     """Create a Yoco Checkout session and return redirect URL"""

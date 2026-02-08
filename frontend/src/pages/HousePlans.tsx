@@ -783,18 +783,54 @@ export const HousePlans = () => {
     }
   };
 
+  const buildWhatsappMessage = (summary: any) => {
+    const pickupText = summary.pick_up_point
+      ? `Pickup: ${summary.pick_up_point}${summary.area_mall ? ` (${summary.area_mall})` : ''}`
+      : '';
+    return (
+      `Hello, I have completed a purchase. My purchase ID is ${summary.receipt_id}. Please assist with proof of payment on WhatsApp.\n\n` +
+      `Bill To:\n${summary.full_name}\n${summary.email}\n${summary.phone_number}` +
+      `${summary.province ? `\nProvince: ${summary.province}` : ''}` +
+      `${pickupText ? `\n${pickupText}` : ''}` +
+      `\nAccess your house plan here: ${summary.plan_url}\n\n` +
+      `Item Description\n` +
+      `Receipt ID: ${summary.receipt_id}\n` +
+      `Date: ${summary.date}\n` +
+      `Status: ${summary.status}\n` +
+      `Type\nPrice\n` +
+      `${summary.plan_title}\n` +
+      `Design #${summary.plan_id}\n` +
+      `${summary.plan_type}\n` +
+      `R ${summary.plan_price}`
+    );
+  };
+
   useEffect(() => {
     if (!showReceiptBanner || !receiptPurchaseId || hasTriggeredReceiptFlow.current) return;
     hasTriggeredReceiptFlow.current = true;
 
-    const whatsappNumber = '27726659790';
-    const message = `Hello, I have completed a purchase. My purchase ID is ${receiptPurchaseId}. Please assist with proof of payment on WhatsApp.`;
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    const runWhatsappFlow = async () => {
+      const whatsappNumber = '27726659790';
+      let message = `Hello, I have completed a purchase. My purchase ID is ${receiptPurchaseId}. Please assist with proof of payment on WhatsApp.`;
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/purchase/${receiptPurchaseId}/summary/`);
+        if (response.ok) {
+          const summary = await response.json();
+          message = buildWhatsappMessage(summary);
+        }
+      } catch (error) {
+        console.error('Failed to load purchase summary:', error);
+      }
 
-    setTimeout(() => {
-      handleDownloadReceipt();
-    }, 800);
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+      setTimeout(() => {
+        handleDownloadReceipt();
+      }, 800);
+    };
+
+    runWhatsappFlow();
   }, [showReceiptBanner, receiptPurchaseId]);
 
   // Fetch house plans from backend on component mount
