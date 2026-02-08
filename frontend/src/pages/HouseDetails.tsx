@@ -224,6 +224,7 @@ export const HouseDetails = () => {
                city: contactInfo.city,
                pick_up_point: contactInfo.pickupPoint,
                area_mall: contactInfo.areaMall,
+                           secret_password: contactInfo.secretPassword,
             })
          });
 

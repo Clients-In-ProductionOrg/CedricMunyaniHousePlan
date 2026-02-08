@@ -366,6 +366,13 @@ class Purchase(models.Model):
         blank=True,
         help_text="Public purchase ID used in URLs"
     )
+
+    secret_password_hash = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        help_text="Hashed secret password"
+    )
     
     # Payment Information
     yoco_reference = models.CharField(max_length=255, blank=True, null=True, help_text="Yoco payment reference ID")

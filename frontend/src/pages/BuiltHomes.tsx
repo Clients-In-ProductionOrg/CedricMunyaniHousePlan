@@ -50,6 +50,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
     name: '', 
     email: '', 
     phone: '',
+    secretPassword: '',
     province: '',
     city: '',
     pickupPoint: '',
@@ -333,6 +334,13 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                     className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
                   />
                   <input
+                    type="password"
+                    placeholder="Secret Password"
+                    value={contactInfo.secretPassword}
+                    onChange={(e) => setContactInfo({ ...contactInfo, secretPassword: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
+                  />
+                  <input
                     type="text"
                     placeholder="Province"
                     value={contactInfo.province}
@@ -370,6 +378,10 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                   onClick={async () => {
                     // Save purchase to database
                     try {
+                      if (!contactInfo.name || !contactInfo.email || !contactInfo.phone || !contactInfo.secretPassword) {
+                        alert('Please fill in all required fields');
+                        return;
+                      }
                       const response = await fetch(API_ENDPOINTS.PURCHASES, {
                         method: 'POST',
                         headers: {
@@ -384,6 +396,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                           city: contactInfo.city,
                           pick_up_point: contactInfo.pickupPoint,
                           area_mall: contactInfo.areaMall,
+                          secret_password: contactInfo.secretPassword,
                         })
                       });
                       

@@ -4,6 +4,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from urllib.parse import quote
 import hashlib
@@ -122,6 +123,12 @@ def create_purchase(request):
     try:
         data = request.data
         house_plan = HousePlan.objects.get(pk=data.get('house_plan_id'))
+        secret_password = (data.get('secret_password') or '').strip()
+        if not secret_password:
+            return Response({
+                'success': False,
+                'error': 'Secret password is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         purchase = Purchase.objects.create(
             house_plan=house_plan,
@@ -133,6 +140,7 @@ def create_purchase(request):
             city=data.get('city'),
             pick_up_point=data.get('pick_up_point', ''),
             area_mall=data.get('area_mall', ''),
+            secret_password_hash=make_password(secret_password),
             payment_status='pending'
         )
         return Response({
