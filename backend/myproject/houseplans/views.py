@@ -499,11 +499,16 @@ def _build_receipt_pdf(purchase: Purchase, frontend_base: str) -> bytes:
     
     # --- Footer ---
     elements.append(Spacer(1, 50))
-    footer_text = Paragraph(
-        "Thank you for your purchase. Please contact us if you have any questions.",
-        styles['FooterText']
+    delivery_notice = (
+        "<b>Delivery Notice</b><br/>"
+        "Please note that the purchased house plan will be delivered within less than 5 working days.<br/><br/>"
+        "For more information or assistance, please contact us on:<br/>"
+        "069 588 5837 / 072 665 9790<br/><br/>"
+        "You may also reach us on Facebook:<br/>"
+        "<a href=\"https://web.facebook.com/MPHOCEDRICHOUSEPLANS?_rdc=1&_rdr#\" color=\"#00B4D8\">"
+        "<u>MPHO CEDRIC HOUSE PLANS</u></a>"
     )
-    elements.append(footer_text)
+    elements.append(Paragraph(delivery_notice, styles['FooterText']))
 
     # Build PDF
     doc.build(elements)
