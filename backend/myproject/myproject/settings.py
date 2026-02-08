@@ -182,6 +182,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS Configuration - Read from .env only
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=lambda v: [s.strip() for s in v.split(',')])
 
+# Frontend URL for redirects and receipts
+FRONTEND_URL = config('FRONTEND_URL', default='')
+
 CORS_ALLOW_CREDENTIALS = True
 # Yoco Payment Gateway Configuration
 YOCO_PUBLIC_KEY = config('YOCO_PUBLIC_KEY', default='pk_test_da8ab942DmM7Ydza2ea4')
