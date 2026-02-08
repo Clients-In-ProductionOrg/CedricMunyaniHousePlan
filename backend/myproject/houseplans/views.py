@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -9,6 +10,9 @@ import hashlib
 import hmac
 import logging
 import time
+import io
+from reportlab.lib.pagesizes import LETTER
+from reportlab.pdfgen import canvas
 import requests
 from datetime import datetime
 from .models import HousePlan, HousePlanImage, Floor, Room, Feature, Amenity, QuoteRequest, ContactMessage, Purchase, SiteSettings
@@ -281,6 +285,17 @@ def _build_signed_redirect_url(request, purchase_id: str, action: str, return_ur
     )
 
 
+def _build_signed_receipt_url(request, purchase_id: str, return_url: str) -> str:
+    backend_base = request.build_absolute_uri('/').rstrip('/')
+    expires = int(time.time()) + (2 * 60 * 60)
+    signature = _build_signature(purchase_id, 'receipt', return_url, expires)
+    encoded_return_url = quote(return_url, safe='')
+    return (
+        f"{backend_base}/api/purchase/{purchase_id}/receipt/"
+        f"?return_url={encoded_return_url}&expires={expires}&sig={signature}"
+    )
+
+
 def _validate_signature(request, purchase_id: str, action: str) -> bool:
     return_url = request.query_params.get('return_url', '')
     expires = request.query_params.get('expires', '')
@@ -299,6 +314,46 @@ def _validate_signature(request, purchase_id: str, action: str) -> bool:
 
     expected = _build_signature(purchase_id, action, return_url, expires_value)
     return hmac.compare_digest(expected, signature)
+
+
+def _build_receipt_pdf(purchase: Purchase, frontend_base: str) -> bytes:
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=LETTER)
+    width, height = LETTER
+
+    pdf.setTitle("Cedric Houseplan Receipt")
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(40, height - 50, "Cedric Houseplan - Payment Receipt")
+
+    pdf.setFont("Helvetica", 11)
+    y = height - 90
+    line_height = 18
+
+    houseplan_url = f"{frontend_base}/house-details/{purchase.house_plan.id}"
+
+    lines = [
+        f"Receipt ID: {purchase.public_id}",
+        f"Full Name: {purchase.full_name}",
+        f"House Plan: {purchase.house_plan.title}",
+        f"Plan Price: R{purchase.plan_price}",
+        f"Email: {purchase.email}",
+        f"Phone Number: {purchase.phone_number}",
+        f"Pick up point: {purchase.pick_up_point or '-'}",
+        f"Area mall: {purchase.area_mall or '-'}",
+        f"House plan link: {houseplan_url}",
+    ]
+
+    for line in lines:
+        pdf.drawString(40, y, line)
+        y -= line_height
+
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(40, 40, "Thank you for your purchase.")
+
+    pdf.showPage()
+    pdf.save()
+
+    return buffer.getvalue()
 
 
 def _get_purchase_by_identifier(purchase_id: str) -> Purchase:
@@ -410,6 +465,35 @@ def sync_purchase_status(request, purchase_id):
     return Response({
         'payment_status': purchase.payment_status
     })
+
+
+@api_view(['GET'])
+def purchase_receipt_link(request, purchase_id):
+    purchase = _get_purchase_by_identifier(purchase_id)
+    if purchase.payment_status != 'completed':
+        return Response({'detail': 'Receipt available after payment completion.'}, status=status.HTTP_403_FORBIDDEN)
+
+    frontend_base = getattr(settings, 'FRONTEND_URL', None) or request.headers.get('Origin') or request.build_absolute_uri('/').rstrip('/')
+    return_url = f"{frontend_base}/house-plans?receipt=ready&purchase_id={purchase.public_id}"
+    url = _build_signed_receipt_url(request, purchase.public_id, return_url)
+    return Response({'url': url})
+
+
+@api_view(['GET'])
+def purchase_receipt(request, purchase_id):
+    if not _validate_signature(request, purchase_id, 'receipt'):
+        return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
+
+    purchase = _get_purchase_by_identifier(purchase_id)
+    if purchase.payment_status != 'completed':
+        return Response({'detail': 'Receipt available after payment completion.'}, status=status.HTTP_403_FORBIDDEN)
+
+    frontend_base = getattr(settings, 'FRONTEND_URL', None) or request.headers.get('Origin') or request.build_absolute_uri('/').rstrip('/')
+    pdf_bytes = _build_receipt_pdf(purchase, frontend_base)
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="receipt-{purchase.public_id}.pdf"'
+    return response
 
 
 @api_view(['POST'])

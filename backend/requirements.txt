@@ -16,3 +16,4 @@ boto3==1.35.46
 yoco==1.2.0
 requests==2.31.0
 gunicorn==23.0.0
+reportlab==4.2.5

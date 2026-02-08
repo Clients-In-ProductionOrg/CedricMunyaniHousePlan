@@ -593,13 +593,21 @@ export const HousePlans = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [plans, setPlans] = useState<HousePlan[]>(housePlans); // Fallback to static data
   const [loading, setLoading] = useState(true);
+  const [receiptPurchaseId, setReceiptPurchaseId] = useState<string | null>(null);
+  const [showReceiptBanner, setShowReceiptBanner] = useState(false);
+  const [isReceiptLoading, setIsReceiptLoading] = useState(false);
+  const [receiptError, setReceiptError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 6;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const purchaseId = params.get('purchase_id');
+    const checkout = params.get('checkout');
     if (!purchaseId) return;
+
+    setReceiptPurchaseId(purchaseId);
+    setShowReceiptBanner(checkout === 'success');
 
     const syncStatus = async () => {
       try {
@@ -611,6 +619,25 @@ export const HousePlans = () => {
 
     syncStatus();
   }, []);
+
+  const handleDownloadReceipt = async () => {
+    if (!receiptPurchaseId) return;
+    setIsReceiptLoading(true);
+    setReceiptError(null);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/purchase/${receiptPurchaseId}/receipt-link/`);
+      const data = await response.json();
+      if (!response.ok || !data.url) {
+        throw new Error(data.detail || 'Unable to generate receipt');
+      }
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Receipt error:', error);
+      setReceiptError('Unable to generate receipt. Please try again.');
+    } finally {
+      setIsReceiptLoading(false);
+    }
+  };
 
   // Fetch house plans from backend on component mount
   useEffect(() => {
@@ -814,6 +841,24 @@ export const HousePlans = () => {
   return (
     <>
       <Header />
+      {showReceiptBanner && receiptPurchaseId && (
+        <div className="bg-emerald-50 border-b border-emerald-200 text-emerald-900">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="font-semibold">Payment confirmed.</p>
+              <p className="text-sm">Download your receipt for your records.</p>
+              {receiptError && <p className="text-sm text-red-600">{receiptError}</p>}
+            </div>
+            <Button
+              size="sm"
+              onClick={handleDownloadReceipt}
+              disabled={isReceiptLoading}
+            >
+              {isReceiptLoading ? 'Preparing...' : 'Download Receipt'}
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="min-h-screen bg-background">
         <div className="flex flex-col md:flex-row">
         {/* Filter Sidebar */}

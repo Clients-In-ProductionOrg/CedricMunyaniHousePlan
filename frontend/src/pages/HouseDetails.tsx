@@ -67,6 +67,10 @@ export const HouseDetails = () => {
   });
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+   const [receiptPurchaseId, setReceiptPurchaseId] = useState<string | null>(null);
+   const [showReceiptBanner, setShowReceiptBanner] = useState(false);
+   const [isReceiptLoading, setIsReceiptLoading] = useState(false);
+   const [receiptError, setReceiptError] = useState<string | null>(null);
 
   // Fetch plan from API
   useEffect(() => {
@@ -125,7 +129,11 @@ export const HouseDetails = () => {
    useEffect(() => {
       const params = new URLSearchParams(window.location.search);
       const purchaseId = params.get('purchase_id');
+      const checkout = params.get('checkout');
       if (!purchaseId) return;
+
+      setReceiptPurchaseId(purchaseId);
+      setShowReceiptBanner(checkout === 'success');
 
       const syncStatus = async () => {
          try {
@@ -137,6 +145,25 @@ export const HouseDetails = () => {
 
       syncStatus();
    }, []);
+
+   const handleDownloadReceipt = async () => {
+      if (!receiptPurchaseId) return;
+      setIsReceiptLoading(true);
+      setReceiptError(null);
+      try {
+         const response = await fetch(`${BACKEND_URL}/api/purchase/${receiptPurchaseId}/receipt-link/`);
+         const data = await response.json();
+         if (!response.ok || !data.url) {
+            throw new Error(data.detail || 'Unable to generate receipt');
+         }
+         window.location.href = data.url;
+      } catch (error) {
+         console.error('Receipt error:', error);
+         setReceiptError('Unable to generate receipt. Please try again.');
+      } finally {
+         setIsReceiptLoading(false);
+      }
+   };
 
   if (loading) {
     return (
@@ -242,9 +269,27 @@ export const HouseDetails = () => {
       }
    };
 
-  return (
-    <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
-      <Header />
+   return (
+      <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
+         <Header />
+         {showReceiptBanner && receiptPurchaseId && (
+            <div className="bg-emerald-50 border-b border-emerald-200 text-emerald-900">
+               <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                     <p className="font-semibold">Payment confirmed.</p>
+                     <p className="text-sm">Download your receipt for your records.</p>
+                     {receiptError && <p className="text-sm text-red-600">{receiptError}</p>}
+                  </div>
+                  <Button
+                     size="sm"
+                     onClick={handleDownloadReceipt}
+                     disabled={isReceiptLoading}
+                  >
+                     {isReceiptLoading ? 'Preparing...' : 'Download Receipt'}
+                  </Button>
+               </div>
+            </div>
+         )}
       
       {/* Immersive Hero Header - Clickable for Fullscreen */}
       <div 
