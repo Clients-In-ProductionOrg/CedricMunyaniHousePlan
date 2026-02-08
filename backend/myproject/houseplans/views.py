@@ -183,10 +183,16 @@ def _sync_purchase_with_yoco(purchase: Purchase) -> Purchase:
         or ''
     ).lower()
 
+    terminal_statuses = {'cancelled', 'failed', 'completed'}
+    success_statuses = {'succeeded', 'successful', 'completed', 'paid'}
+
     if not status_value:
         return purchase
 
-    if status_value in {'succeeded', 'successful', 'completed', 'paid'}:
+    if purchase.payment_status in terminal_statuses and status_value not in success_statuses:
+        return purchase
+
+    if status_value in success_statuses:
         purchase.payment_status = 'completed'
         purchase.yoco_payment_id = (
             response_data.get('payment_id')
