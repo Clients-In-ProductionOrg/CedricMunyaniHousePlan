@@ -268,6 +268,16 @@ def _get_return_url(request) -> str:
     return settings.FRONTEND_URL
 
 
+def _get_frontend_base(request) -> str:
+    configured = getattr(settings, 'FRONTEND_URL', None)
+    if configured:
+        return configured.rstrip('/')
+    origin = request.headers.get('Origin')
+    if origin:
+        return origin.rstrip('/')
+    return request.build_absolute_uri('/').rstrip('/')
+
+
 def _build_signature(purchase_id: str, action: str, return_url: str, expires: int) -> str:
     secret = settings.SECRET_KEY.encode('utf-8')
     message = f"{purchase_id}:{action}:{expires}:{return_url}".encode('utf-8')
@@ -473,7 +483,7 @@ def purchase_receipt_link(request, purchase_id):
     if purchase.payment_status != 'completed':
         return Response({'detail': 'Receipt available after payment completion.'}, status=status.HTTP_403_FORBIDDEN)
 
-    frontend_base = getattr(settings, 'FRONTEND_URL', None) or request.headers.get('Origin') or request.build_absolute_uri('/').rstrip('/')
+    frontend_base = _get_frontend_base(request)
     return_url = f"{frontend_base}/house-plans?receipt=ready&purchase_id={purchase.public_id}"
     url = _build_signed_receipt_url(request, purchase.public_id, return_url)
     return Response({'url': url})
@@ -488,7 +498,7 @@ def purchase_receipt(request, purchase_id):
     if purchase.payment_status != 'completed':
         return Response({'detail': 'Receipt available after payment completion.'}, status=status.HTTP_403_FORBIDDEN)
 
-    frontend_base = getattr(settings, 'FRONTEND_URL', None) or request.headers.get('Origin') or request.build_absolute_uri('/').rstrip('/')
+    frontend_base = _get_frontend_base(request)
     pdf_bytes = _build_receipt_pdf(purchase, frontend_base)
 
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
