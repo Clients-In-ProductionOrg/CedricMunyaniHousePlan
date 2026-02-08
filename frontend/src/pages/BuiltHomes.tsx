@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { API_ENDPOINTS, BACKEND_URL } from '@/config/constants';
@@ -51,11 +51,15 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
     email: '', 
     phone: '',
     secretPassword: '',
+    confirmPassword: '',
     province: '',
     city: '',
     pickupPoint: '',
     areaMall: ''
   });
+  const [showSecretPassword, setShowSecretPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPasswordMismatch, setShowPasswordMismatch] = useState(false);
   const [paymentInfo, setPaymentInfo] = useState({ 
     cardNumber: '', 
     expiryDate: '', 
@@ -333,13 +337,67 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                     onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
                     className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
                   />
-                  <input
-                    type="password"
-                    placeholder="Secret Password"
-                    value={contactInfo.secretPassword}
-                    onChange={(e) => setContactInfo({ ...contactInfo, secretPassword: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showSecretPassword ? 'text' : 'password'}
+                      placeholder="Secret Password"
+                      value={contactInfo.secretPassword}
+                      onChange={(e) => {
+                        const nextValue = e.target.value;
+                        const nextConfirm = contactInfo.confirmPassword;
+                        setContactInfo({ ...contactInfo, secretPassword: nextValue });
+                        if (nextConfirm) {
+                          setShowPasswordMismatch(nextValue !== nextConfirm);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (contactInfo.confirmPassword) {
+                          setShowPasswordMismatch(contactInfo.secretPassword !== contactInfo.confirmPassword);
+                        }
+                      }}
+                      className="w-full px-3 py-2 border rounded-lg mb-3 text-sm pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSecretPassword((prev) => !prev)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      aria-label={showSecretPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showSecretPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Confirm Password"
+                      value={contactInfo.confirmPassword}
+                      onChange={(e) => {
+                        const nextValue = e.target.value;
+                        const nextSecret = contactInfo.secretPassword;
+                        setContactInfo({ ...contactInfo, confirmPassword: nextValue });
+                        if (nextSecret) {
+                          setShowPasswordMismatch(nextSecret !== nextValue);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (contactInfo.secretPassword) {
+                          setShowPasswordMismatch(contactInfo.secretPassword !== contactInfo.confirmPassword);
+                        }
+                      }}
+                      className="w-full px-3 py-2 border rounded-lg mb-1 text-sm pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {showPasswordMismatch && (
+                    <p className="text-xs text-red-600 mb-2">Passwords do not match.</p>
+                  )}
                   <input
                     type="text"
                     placeholder="Province"
@@ -378,8 +436,13 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                   onClick={async () => {
                     // Save purchase to database
                     try {
-                      if (!contactInfo.name || !contactInfo.email || !contactInfo.phone || !contactInfo.secretPassword) {
+                      if (!contactInfo.name || !contactInfo.email || !contactInfo.phone || !contactInfo.secretPassword || !contactInfo.confirmPassword || !contactInfo.province || !contactInfo.city || !contactInfo.pickupPoint || !contactInfo.areaMall) {
                         alert('Please fill in all required fields');
+                        return;
+                      }
+                      if (contactInfo.secretPassword !== contactInfo.confirmPassword) {
+                        setShowPasswordMismatch(true);
+                        alert('Passwords do not match');
                         return;
                       }
                       const response = await fetch(API_ENDPOINTS.PURCHASES, {
