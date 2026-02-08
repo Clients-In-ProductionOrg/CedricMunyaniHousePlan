@@ -211,11 +211,12 @@ export const HouseDetails = () => {
          const cancelReturnUrl = `${basePath}?checkout=cancel&purchase_id=${purchaseData.id}`;
          const failureReturnUrl = `${basePath}?checkout=failure&purchase_id=${purchaseData.id}`;
 
-         const successUrl = `${BACKEND_URL}/api/purchase/${purchaseData.id}/success/?return_url=${encodeURIComponent(successReturnUrl)}`;
-         const cancelUrl = `${BACKEND_URL}/api/purchase/${purchaseData.id}/cancel/?return_url=${encodeURIComponent(cancelReturnUrl)}`;
-         const failureUrl = `${BACKEND_URL}/api/purchase/${purchaseData.id}/failure/?return_url=${encodeURIComponent(failureReturnUrl)}`;
+         const backendUrl = 'https://cedricmunyanihouseplan-backend.onrender.com';
+         const successUrl = `${backendUrl}/api/purchase/${purchaseData.id}/success/?return_url=${encodeURIComponent(successReturnUrl)}`;
+         const cancelUrl = `${backendUrl}/api/purchase/${purchaseData.id}/cancel/?return_url=${encodeURIComponent(cancelReturnUrl)}`;
+         const failureUrl = `${backendUrl}/api/purchase/${purchaseData.id}/failure/?return_url=${encodeURIComponent(failureReturnUrl)}`;
 
-         const checkoutResponse = await fetch(`${BACKEND_URL}/api/create-checkout/`, {
+         const checkoutResponse = await fetch(`https://cedricmunyanihouseplan-backend.onrender.com/api/create-checkout/`, {
             method: 'POST',
             headers: {
                'Content-Type': 'application/json',

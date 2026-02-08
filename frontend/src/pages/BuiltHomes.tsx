@@ -68,11 +68,16 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
     setIsProcessingPayment(true);
     try {
       const origin = window.location.origin;
-      const successUrl = `${origin}/built-homes?checkout=success&purchase_id=${purchaseIdValue}`;
-      const cancelUrl = `${origin}/built-homes?checkout=cancel&purchase_id=${purchaseIdValue}`;
-      const failureUrl = `${origin}/built-homes?checkout=failure&purchase_id=${purchaseIdValue}`;
+      const successReturnUrl = `${origin}/built-homes?checkout=success&purchase_id=${purchaseIdValue}`;
+      const cancelReturnUrl = `${origin}/built-homes?checkout=cancel&purchase_id=${purchaseIdValue}`;
+      const failureReturnUrl = `${origin}/built-homes?checkout=failure&purchase_id=${purchaseIdValue}`;
 
-      const response = await fetch(`${BACKEND_URL}/api/create-checkout/`, {
+      const backendUrl = 'https://cedricmunyanihouseplan-backend.onrender.com';
+      const successUrl = `${backendUrl}/api/purchase/${purchaseIdValue}/success/?return_url=${encodeURIComponent(successReturnUrl)}`;
+      const cancelUrl = `${backendUrl}/api/purchase/${purchaseIdValue}/cancel/?return_url=${encodeURIComponent(cancelReturnUrl)}`;
+      const failureUrl = `${backendUrl}/api/purchase/${purchaseIdValue}/failure/?return_url=${encodeURIComponent(failureReturnUrl)}`;
+
+      const response = await fetch(`https://cedricmunyanihouseplan-backend.onrender.com/api/create-checkout/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
