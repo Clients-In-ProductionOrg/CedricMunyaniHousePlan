@@ -178,7 +178,7 @@ export const HouseDetails = () => {
       if (!showReceiptBanner || !receiptPurchaseId || hasTriggeredReceiptFlow.current) return;
       hasTriggeredReceiptFlow.current = true;
 
-      const whatsappNumber = '0726559790';
+      const whatsappNumber = '27626559790';
       const message = `Hello, I have completed a purchase. My purchase ID is ${receiptPurchaseId}. Please assist with proof of payment on WhatsApp.`;
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
