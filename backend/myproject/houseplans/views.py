@@ -183,6 +183,9 @@ def _sync_purchase_with_yoco(purchase: Purchase) -> Purchase:
         or ''
     ).lower()
 
+    if not status_value:
+        return purchase
+
     if status_value in {'succeeded', 'successful', 'completed', 'paid'}:
         purchase.payment_status = 'completed'
         purchase.yoco_payment_id = (
@@ -195,6 +198,8 @@ def _sync_purchase_with_yoco(purchase: Purchase) -> Purchase:
         purchase.payment_status = 'cancelled'
     elif status_value == 'failed':
         purchase.payment_status = 'failed'
+    elif status_value == 'pending' and purchase.payment_status in {'cancelled', 'failed', 'completed'}:
+        return purchase
     else:
         purchase.payment_status = 'pending'
 
