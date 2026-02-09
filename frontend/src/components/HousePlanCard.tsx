@@ -1,10 +1,12 @@
 import { Bed, Bath, Square, Heart, Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
 interface HousePlanCardProps {
+  id: string | number;
   image: string;
   title: string;
   beds: number;
@@ -17,6 +19,7 @@ interface HousePlanCardProps {
 
 
 const HousePlanCard = ({ 
+  id,
   image, 
   title, 
   beds, 
@@ -27,6 +30,7 @@ const HousePlanCard = ({
   videoUrl
 }: HousePlanCardProps) => {
   const [showVideo, setShowVideo] = useState(false);
+  const navigate = useNavigate();
   return (
     <>
       <div className="group relative bg-card rounded-3xl overflow-hidden border border-border/50 hover:border-primary/20 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-shadow duration-500">
@@ -87,7 +91,10 @@ const HousePlanCard = ({
                 R{typeof price === 'string' && !isNaN(Number(price)) ? Number(price).toLocaleString() : price}
               </span>
             </div>
-            <Button className="rounded-xl px-6 font-semibold shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all">
+            <Button
+              className="rounded-xl px-6 font-semibold shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
+              onClick={() => navigate(`/house-plans?plan_id=${id}`)}
+            >
               View Plan
             </Button>
           </div>

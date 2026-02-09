@@ -68,6 +68,7 @@ const PopularPlans = () => {
               return (
                 <HousePlanCard
                   key={plan.id}
+                  id={plan.id}
                   image={imageUrl}
                   title={plan.title}
                   beds={plan.bedrooms}

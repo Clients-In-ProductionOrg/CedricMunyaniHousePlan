@@ -315,7 +315,10 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
 
   return (
     <>
-      <div className="group relative bg-card rounded-3xl overflow-hidden border border-border/50 hover:border-primary/20 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-shadow duration-500">
+      <div
+        id={`plan-${plan.id}`}
+        className="group relative bg-card rounded-3xl overflow-hidden border border-border/50 hover:border-primary/20 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-shadow duration-500"
+      >
         <div 
           className="relative aspect-[4/3] overflow-hidden bg-muted cursor-pointer"
           onClick={handleOpenGallery}
@@ -1030,6 +1033,8 @@ export const HousePlans = () => {
   const [isGlobalReceiptLoading, setIsGlobalReceiptLoading] = useState(false);
   const [showGlobalReceiptPassword, setShowGlobalReceiptPassword] = useState(false);
   const [isGlobalForgotPasswordLoading, setIsGlobalForgotPasswordLoading] = useState(false);
+  const [scrollPlanId, setScrollPlanId] = useState<string | null>(null);
+  const hasAutoScrolled = useRef(false);
   const hasTriggeredReceiptFlow = useRef(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 6;
@@ -1059,6 +1064,14 @@ export const HousePlans = () => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('download_receipt') === '1') {
       setShowGlobalReceiptModal(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const planId = params.get('plan_id');
+    if (planId) {
+      setScrollPlanId(planId);
     }
   }, []);
 
@@ -1414,6 +1427,26 @@ export const HousePlans = () => {
 
     return filtered;
   }, [filters, sortBy, searchQuery, plans]);
+
+  useEffect(() => {
+    if (!scrollPlanId || hasAutoScrolled.current) return;
+    const targetIndex = filteredAndSortedPlans.findIndex(
+      (plan) => String(plan.id) === scrollPlanId
+    );
+    if (targetIndex === -1) return;
+    const targetPage = Math.floor(targetIndex / itemsPerPage) + 1;
+    if (currentPage !== targetPage) {
+      setCurrentPage(targetPage);
+      return;
+    }
+    requestAnimationFrame(() => {
+      const targetElement = document.getElementById(`plan-${scrollPlanId}`);
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        hasAutoScrolled.current = true;
+      }
+    });
+  }, [scrollPlanId, filteredAndSortedPlans, currentPage, itemsPerPage]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedPlans.length / itemsPerPage);
