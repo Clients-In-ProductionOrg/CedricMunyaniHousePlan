@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/pagination';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Drawer,
   DrawerContent,
@@ -834,6 +835,26 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                   Ok
                 </Button>
               </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {isProcessingPayment && (
+        <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4">
+          <Card className="w-full max-w-md bg-white">
+            <div className="p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Connecting to Yoco</h3>
+                <span className="text-xs text-muted-foreground">Secure checkout</span>
+              </div>
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-2/3" />
+              <div className="pt-2">
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <p className="text-xs text-muted-foreground text-center">Please wait while we prepare your payment.</p>
             </div>
           </Card>
         </div>

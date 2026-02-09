@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { API_ENDPOINTS, BACKEND_URL } from '@/config/constants';
@@ -78,6 +79,7 @@ export const HouseDetails = () => {
    const [showPurchaseErrorModal, setShowPurchaseErrorModal] = useState(false);
    const [purchaseErrorModalMessage, setPurchaseErrorModalMessage] = useState('');
    const secretPasswordInputRef = useRef<HTMLInputElement | null>(null);
+   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
    const [receiptPurchaseId, setReceiptPurchaseId] = useState<string | null>(null);
@@ -282,6 +284,7 @@ export const HouseDetails = () => {
   ];
 
    const handleCheckoutPayment = async () => {
+      setIsProcessingPayment(true);
       try {
          const purchaseResponse = await fetch(API_ENDPOINTS.PURCHASES, {
             method: 'POST',
@@ -345,6 +348,8 @@ export const HouseDetails = () => {
       } catch (error) {
          console.error('Payment error:', error);
          alert('Payment processing error. Please try again.');
+      } finally {
+         setIsProcessingPayment(false);
       }
    };
 
@@ -1063,6 +1068,26 @@ export const HouseDetails = () => {
                            Ok
                         </Button>
                      </div>
+                  </div>
+               </Card>
+            </div>
+         )}
+
+         {isProcessingPayment && (
+            <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4">
+               <Card className="w-full max-w-md bg-white">
+                  <div className="p-6 space-y-5">
+                     <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Connecting to Yoco</h3>
+                        <span className="text-xs text-muted-foreground">Secure checkout</span>
+                     </div>
+                     <Skeleton className="h-6 w-3/4" />
+                     <Skeleton className="h-4 w-5/6" />
+                     <Skeleton className="h-4 w-2/3" />
+                     <div className="pt-2">
+                        <Skeleton className="h-10 w-full" />
+                     </div>
+                     <p className="text-xs text-muted-foreground text-center">Please wait while we prepare your payment.</p>
                   </div>
                </Card>
             </div>
