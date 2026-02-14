@@ -984,6 +984,8 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
 
 // Main BuiltHomes Page Component
 export const BuiltHomes = () => {
+  const CACHE_KEY = 'built-homes-catalog-v1';
+  const CACHE_TTL_MS = 5 * 60 * 1000;
   const [filters, setFilters] = useState<FilterState>({});
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [currentPage, setCurrentPage] = useState(1);
@@ -1094,12 +1096,26 @@ export const BuiltHomes = () => {
   // Fetch built homes from API
   useEffect(() => {
     const fetchBuiltHomes = async () => {
+      let hasLoadedFromCache = false;
+
       try {
-        setLoading(true);
+        const rawCache = localStorage.getItem(CACHE_KEY);
+        if (rawCache) {
+          const parsedCache = JSON.parse(rawCache);
+          const isFresh = Date.now() - (parsedCache?.timestamp || 0) < CACHE_TTL_MS;
+          if (isFresh && Array.isArray(parsedCache?.plans)) {
+            setApiPlans(parsedCache.plans);
+            setLoading(false);
+            hasLoadedFromCache = true;
+          }
+        }
+      } catch {
+        localStorage.removeItem(CACHE_KEY);
+      }
+
+      try {
         const response = await fetch(API_ENDPOINTS.BUILT_HOMES);
         const data = await response.json();
-        
-        console.log('Built homes API response:', data);
         
         // Handle both paginated and non-paginated responses
         const plansList = Array.isArray(data) ? data : data.results || [];
@@ -1145,15 +1161,29 @@ export const BuiltHomes = () => {
             status: plan.status
           };
         });
-        
-        console.log('Transformed built homes:', transformedPlans);
         setApiPlans(transformedPlans);
+
+        try {
+          localStorage.setItem(
+            CACHE_KEY,
+            JSON.stringify({
+              timestamp: Date.now(),
+              plans: transformedPlans,
+            })
+          );
+        } catch {
+          // Ignore caching issues
+        }
       } catch (error) {
         console.error('Error fetching built homes:', error);
         // Fallback to static data
-        setApiPlans(builtHomes);
+        if (!hasLoadedFromCache) {
+          setApiPlans(builtHomes);
+        }
       } finally {
-        setLoading(false);
+        if (!hasLoadedFromCache) {
+          setLoading(false);
+        }
       }
     };
 

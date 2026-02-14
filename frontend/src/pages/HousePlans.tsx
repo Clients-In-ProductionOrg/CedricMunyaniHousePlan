@@ -1013,6 +1013,8 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
 
 // Main HousePlans Page Component
 export const HousePlans = () => {
+  const CACHE_KEY = 'house-plans-catalog-v1';
+  const CACHE_TTL_MS = 5 * 60 * 1000;
   const [filters, setFilters] = useState<FilterState>({});
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [currentPage, setCurrentPage] = useState(1);
@@ -1244,16 +1246,30 @@ export const HousePlans = () => {
   // Fetch house plans from backend on component mount
   useEffect(() => {
     const fetchPlans = async () => {
+      let hasLoadedFromCache = false;
+
       try {
-        console.log('Fetching house plans from API');
+        const rawCache = localStorage.getItem(CACHE_KEY);
+        if (rawCache) {
+          const parsedCache = JSON.parse(rawCache);
+          const isFresh = Date.now() - (parsedCache?.timestamp || 0) < CACHE_TTL_MS;
+          if (isFresh && Array.isArray(parsedCache?.plans)) {
+            setPlans(parsedCache.plans);
+            setLoading(false);
+            hasLoadedFromCache = true;
+          }
+        }
+      } catch {
+        localStorage.removeItem(CACHE_KEY);
+      }
+
+      try {
         const response = await fetch(`${API_ENDPOINTS.PLANS}`);
         const data = await response.json();
-        console.log('API Response:', data);
         
         if (response.ok) {
           // Handle both paginated (data.results) and direct array responses
           const plansList = Array.isArray(data) ? data : data.results || [];
-          console.log('Plans List:', plansList);
           
           // Transform backend data to frontend format
           const transformedPlans = plansList.map((plan: any) => {
@@ -1264,11 +1280,6 @@ export const HousePlans = () => {
             ].filter(img => img);
             
             const images = allImages.length > 0 ? allImages : ['https://via.placeholder.com/600x400'];
-            
-            console.log(`Plan: ${plan.title}, Total Images: ${images.length}`, {
-              images_count: plan.images?.length || 0,
-              primary_image: plan.primary_image ? 'yes' : 'no'
-            });
             
             return {
               id: plan.id.toString(),
@@ -1301,18 +1312,32 @@ export const HousePlans = () => {
               status: plan.status
             };
           });
-          console.log('Transformed Plans:', transformedPlans);
           setPlans(transformedPlans);
+
+          try {
+            localStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({
+                timestamp: Date.now(),
+                plans: transformedPlans,
+              })
+            );
+          } catch {
+            // Ignore cache write issues
+          }
         } else {
           console.error('API Error - Status:', response.status);
         }
       } catch (error) {
         console.error('Error fetching plans:', error);
         // Fallback to static data
-        console.log('Using fallback static data');
-        setPlans(housePlans);
+        if (!hasLoadedFromCache) {
+          setPlans(housePlans);
+        }
       } finally {
-        setLoading(false);
+        if (!hasLoadedFromCache) {
+          setLoading(false);
+        }
       }
     };
 

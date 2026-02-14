@@ -50,6 +50,7 @@ function convertYoutubeUrl(url: string): string {
 }
 
 export const HouseDetails = () => {
+   const CACHE_TTL_MS = 5 * 60 * 1000;
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -90,19 +91,23 @@ export const HouseDetails = () => {
 
   // Fetch plan from API
   useEffect(() => {
-    const fetchPlan = async () => {
-      try {
-        const response = await fetch(API_ENDPOINTS.PLAN_DETAIL(id));
-        if (response.ok) {
-          const planData = await response.json();
-          const allImages = [
+      if (!id) {
+         setLoading(false);
+         return;
+      }
+
+      const cacheKey = `house-details-${id}-v1`;
+      const numericId = Number(id);
+
+      const transformPlan = (planData: any) => {
+         const allImages = [
             ...(planData.images?.map((img: any) => img.image || img.image_url) || []),
             ...(planData.primary_image ? [planData.primary_image] : [])
-          ].filter(img => img);
-          
-          const images = allImages.length > 0 ? allImages : ['https://via.placeholder.com/600x400'];
+         ].filter(img => img);
 
-          const transformedPlan = {
+         const images = allImages.length > 0 ? allImages : ['https://via.placeholder.com/600x400'];
+
+         return {
             id: planData.id.toString(),
             title: planData.title,
             price: Math.round(planData.price),
@@ -113,7 +118,7 @@ export const HouseDetails = () => {
             levels: planData.floors?.length || 2,
             width: planData.width_meters || 30,
             depth: planData.depth_meters || 40,
-            style: [planData.style] || ['Modern'],
+            style: planData.style ? [planData.style] : ['Modern'],
             isNew: planData.is_new || false,
             isPopular: planData.is_popular || false,
             images: images,
@@ -125,22 +130,65 @@ export const HouseDetails = () => {
             propertyType: planData.property_type,
             landSize: planData.land_size,
             status: planData.status
-          };
+         };
+      };
+
+    const fetchPlan = async () => {
+         let hasLoadedFromCache = false;
+
+         try {
+            const rawCache = localStorage.getItem(cacheKey);
+            if (rawCache) {
+               const parsedCache = JSON.parse(rawCache);
+               const isFresh = Date.now() - (parsedCache?.timestamp || 0) < CACHE_TTL_MS;
+               if (isFresh && parsedCache?.plan) {
+                  setPlan(parsedCache.plan);
+                  setLoading(false);
+                  hasLoadedFromCache = true;
+               }
+            }
+         } catch {
+            localStorage.removeItem(cacheKey);
+         }
+
+      try {
+        const response = await fetch(API_ENDPOINTS.PLAN_DETAIL(id));
+        if (response.ok) {
+          const planData = await response.json();
+               const transformedPlan = transformPlan(planData);
           setPlan(transformedPlan);
+
+               try {
+                  localStorage.setItem(
+                     cacheKey,
+                     JSON.stringify({
+                        timestamp: Date.now(),
+                        plan: transformedPlan,
+                     })
+                  );
+               } catch {
+                  // Ignore cache write issues
+               }
         } else {
-          const staticPlan = housePlans.find((p) => p.id === id) || builtHomes.find((p) => p.id === id);
-          setPlan(staticPlan || null);
+               const staticPlan = housePlans.find((p) => p.id === numericId) || builtHomes.find((p) => p.id === numericId);
+               if (!hasLoadedFromCache) {
+                  setPlan(staticPlan || null);
+               }
         }
       } catch (error) {
         console.error('Error fetching plan:', error);
-        const staticPlan = housePlans.find((p) => p.id === id) || builtHomes.find((p) => p.id === id);
-        setPlan(staticPlan || null);
+            if (!hasLoadedFromCache) {
+               const staticPlan = housePlans.find((p) => p.id === numericId) || builtHomes.find((p) => p.id === numericId);
+               setPlan(staticPlan || null);
+            }
       } finally {
-        setLoading(false);
+            if (!hasLoadedFromCache) {
+               setLoading(false);
+            }
       }
     };
     fetchPlan();
-  }, [id]);
+   }, [id]);
 
    useEffect(() => {
       const params = new URLSearchParams(window.location.search);

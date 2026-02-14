@@ -9,6 +9,8 @@ import Footer from "@/components/Footer";
 import { API_ENDPOINTS } from "@/config/constants";
 
 const Index = () => {
+  const CACHE_KEY = "index-home-data-v1";
+  const CACHE_TTL_MS = 5 * 60 * 1000;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [popularPlans, setPopularPlans] = useState<any[]>([]);
@@ -17,16 +19,62 @@ const Index = () => {
 
   // Fetch site settings and house plans from backend
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch all house plans
-        const plansResponse = await fetch(API_ENDPOINTS.PLANS);
-        const plansData = await plansResponse.json();
+    const toFiniteNumber = (value: unknown, fallback = 0) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
 
-        // Fetch site settings for homepage video URL
-        const settingsResponse = await fetch(API_ENDPOINTS.SITE_SETTINGS);
-        const settingsData = settingsResponse.ok ? await settingsResponse.json() : null;
-        setHomeVideoUrl(settingsData?.home_video_url || "");
+    const toFloorAreaText = (plan: any) => {
+      const floorArea = toFiniteNumber(plan.square_feet ?? plan.floor_area ?? plan.floorArea, 0);
+      return floorArea.toString();
+    };
+
+    const fetchData = async () => {
+      let hasLoadedFromCache = false;
+
+      try {
+        const rawCache = localStorage.getItem(CACHE_KEY);
+        if (rawCache) {
+          const parsedCache = JSON.parse(rawCache);
+          const isFresh = Date.now() - (parsedCache?.timestamp || 0) < CACHE_TTL_MS;
+          if (isFresh && Array.isArray(parsedCache?.popularPlans) && Array.isArray(parsedCache?.bestSellingPlans)) {
+            setPopularPlans(parsedCache.popularPlans);
+            setBestSellingPlans(parsedCache.bestSellingPlans);
+            setHomeVideoUrl(parsedCache.homeVideoUrl || "");
+            setLoading(false);
+            hasLoadedFromCache = true;
+          }
+        }
+      } catch {
+        localStorage.removeItem(CACHE_KEY);
+      }
+
+      try {
+        const [plansResult, settingsResult] = await Promise.allSettled([
+          fetch(API_ENDPOINTS.PLANS),
+          fetch(API_ENDPOINTS.SITE_SETTINGS),
+        ]);
+
+        let resolvedHomeVideoUrl = "";
+
+        if (settingsResult.status === 'fulfilled') {
+          const settingsResponse = settingsResult.value;
+          const settingsData = settingsResponse.ok ? await settingsResponse.json() : null;
+          resolvedHomeVideoUrl = settingsData?.home_video_url || "";
+          setHomeVideoUrl(resolvedHomeVideoUrl);
+        } else {
+          setHomeVideoUrl("");
+        }
+
+        if (plansResult.status !== 'fulfilled') {
+          throw plansResult.reason;
+        }
+
+        const plansResponse = plansResult.value;
+        if (!plansResponse.ok) {
+          throw new Error('Failed to fetch house plans');
+        }
+        const plansData = await plansResponse.json();
 
         // Filter and transform popular plans
         const popular = plansData
@@ -42,10 +90,10 @@ const Index = () => {
             return {
               image: image,
               title: plan.title,
-              beds: plan.bedrooms,
-              baths: Math.round(plan.bathrooms),
-              sqft: plan.square_feet.toString(),
-              price: Math.round(plan.price).toLocaleString(),
+              beds: toFiniteNumber(plan.bedrooms),
+              baths: Math.round(toFiniteNumber(plan.bathrooms)),
+              sqft: toFloorAreaText(plan),
+              price: Math.round(toFiniteNumber(plan.price)).toLocaleString(),
               id: plan.id
             };
           });
@@ -64,10 +112,10 @@ const Index = () => {
             return {
               image: image,
               title: plan.title,
-              beds: plan.bedrooms,
-              baths: Math.round(plan.bathrooms),
-              sqft: plan.square_feet.toString(),
-              price: Math.round(plan.price).toLocaleString(),
+              beds: toFiniteNumber(plan.bedrooms),
+              baths: Math.round(toFiniteNumber(plan.bathrooms)),
+              sqft: toFloorAreaText(plan),
+              price: Math.round(toFiniteNumber(plan.price)).toLocaleString(),
               id: plan.id,
               isBestseller: true
             };
@@ -75,10 +123,27 @@ const Index = () => {
 
         setPopularPlans(popular.slice(0, 6));
         setBestSellingPlans(bestSelling.slice(0, 8));
+
+        try {
+          localStorage.setItem(
+            CACHE_KEY,
+            JSON.stringify({
+              timestamp: Date.now(),
+              popularPlans: popular.slice(0, 6),
+              bestSellingPlans: bestSelling.slice(0, 8),
+              homeVideoUrl: resolvedHomeVideoUrl,
+            })
+          );
+        } catch {
+          // Ignore caching failures (private mode/storage limits)
+        }
+
         setLoading(false);
       } catch (error) {
         console.log("Data fetch info:", error);
-        setLoading(false);
+        if (!hasLoadedFromCache) {
+          setLoading(false);
+        }
       }
     };
 
