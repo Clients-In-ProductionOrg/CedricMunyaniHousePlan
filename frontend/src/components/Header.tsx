@@ -1,15 +1,21 @@
 import { Home, Search, X, MessageCircle, Menu, Download } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { chatBotRef } from "./ChatBot";
 import { ThemeToggle } from "./ThemeToggle";
+import { API_ENDPOINTS } from "@/config/constants";
 
-const Header = () => {
+interface HeaderProps {
+  hideNavLinks?: boolean;
+}
+
+const Header = ({ hideNavLinks = false }: HeaderProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [hasBuiltHomes, setHasBuiltHomes] = useState(true);
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -41,6 +47,39 @@ const Header = () => {
     { to: "/house-plans?download_receipt=1", label: "Download Plan", icon: Download, iconClassName: "text-red-600", labelClassName: "text-red-600", openReceipt: true },
   ];
 
+  const visibleNavLinks = useMemo(
+    () => navLinks.filter((link) => (link.to === '/built-homes' ? hasBuiltHomes : true)),
+    [hasBuiltHomes]
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncBuiltHomesVisibility = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.BUILT_HOMES);
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const plansList = Array.isArray(data) ? data : data?.results || [];
+        const hasData = Array.isArray(plansList) && plansList.length > 0;
+
+        if (isMounted) {
+          setHasBuiltHomes(hasData);
+        }
+      } catch {
+        // Keep current visibility on network errors
+      }
+    };
+
+    syncBuiltHomesVisibility();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-20 items-center justify-between">
@@ -53,8 +92,8 @@ const Header = () => {
         </Link>
         
         {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-1">
-          {navLinks.map((link) => (
+        {!hideNavLinks && <nav className="hidden lg:flex items-center gap-1">
+          {visibleNavLinks.map((link) => (
             <Link 
               key={link.to} 
               to={link.to} 
@@ -77,7 +116,7 @@ const Header = () => {
               </span>
             </Link>
           ))}
-        </nav>
+        </nav>}
         
         {/* Right side buttons and mobile menu toggle */}
         <div className="flex items-center gap-2 sm:gap-3">
@@ -102,7 +141,7 @@ const Header = () => {
           </Link>
 
           {/* Mobile Menu Button */}
-          <button
+          {!hideNavLinks && <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="lg:hidden p-2 hover:bg-muted rounded-full transition-colors"
             aria-label="Toggle menu"
@@ -112,16 +151,16 @@ const Header = () => {
             ) : (
               <Menu className="w-6 h-6" />
             )}
-          </button>
+          </button>}
         </div>
       </div>
 
       {/* Mobile Navigation Menu */}
-      {isMobileMenuOpen && (
+      {!hideNavLinks && isMobileMenuOpen && (
         <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container py-4 space-y-2">
             {/* Navigation Links */}
-            {navLinks.map((link) => (
+            {visibleNavLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}

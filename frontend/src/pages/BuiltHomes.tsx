@@ -1161,14 +1161,15 @@ export const BuiltHomes = () => {
             status: plan.status
           };
         });
-        setApiPlans(transformedPlans);
+        const resolvedPlans = transformedPlans.length > 0 ? transformedPlans : builtHomes;
+        setApiPlans(resolvedPlans);
 
         try {
           localStorage.setItem(
             CACHE_KEY,
             JSON.stringify({
               timestamp: Date.now(),
-              plans: transformedPlans,
+              plans: resolvedPlans,
             })
           );
         } catch {
@@ -1313,7 +1314,7 @@ export const BuiltHomes = () => {
 
   return (
     <>
-      <Header />
+      <Header hideNavLinks />
       {showReceiptBanner && receiptPurchaseId && (
         <div className="bg-emerald-50 border-b border-emerald-200 text-emerald-900">
           <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -1444,12 +1445,12 @@ export const BuiltHomes = () => {
 
             {/* Built Homes Grid */}
             <div className="p-4 md:p-6 lg:p-8">
-              {loading ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground text-lg">Loading built homes...</p>
+              {loading && (
+                <div className="text-center pb-6">
+                  <p className="text-muted-foreground text-base">Loading latest built homes...</p>
                 </div>
-              ) : (
-                <>
+              )}
+              <>
                   <div
                     className={
                       viewMode === 'grid'
@@ -1529,8 +1530,7 @@ export const BuiltHomes = () => {
                   </Pagination>
                 </div>
               )}
-                </>
-              )}
+              </>
             </div>
           </div>
         </div>

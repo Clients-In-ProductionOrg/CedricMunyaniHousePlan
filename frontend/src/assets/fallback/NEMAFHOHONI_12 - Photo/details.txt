@@ -1,0 +1,10 @@
+4 bed
+2 bath
+Kitchen 
+Lounge 
+Dining 
+Double garage
+
+R3200 
+
+18x24m

@@ -1699,11 +1699,11 @@ export const HousePlans = () => {
 
           {/* House Plans Grid */}
           <div className="p-4 md:p-6 lg:p-8">
-            {loading ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">Loading house plans...</p>
+            {loading && (
+              <div className="text-center pb-6">
+                <p className="text-muted-foreground text-base">Loading latest house plans...</p>
               </div>
-            ) : (
+            )}
             <div
               className={
                 viewMode === 'grid'
@@ -1721,7 +1721,6 @@ export const HousePlans = () => {
                 </div>
               )}
             </div>
-            )}
 
             {/* Pagination */}
             {paginatedPlans.length > 0 && (

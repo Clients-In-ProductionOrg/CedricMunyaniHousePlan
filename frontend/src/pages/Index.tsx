@@ -7,14 +7,36 @@ import TestimonialCard from "@/components/TestimonialCard";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import { API_ENDPOINTS } from "@/config/constants";
+import { housePlans } from "@/data/housePlans";
 
 const Index = () => {
   const CACHE_KEY = "index-home-data-v1";
   const CACHE_TTL_MS = 5 * 60 * 1000;
   const navigate = useNavigate();
+
+  const mapStaticPlanToCard = (plan: any, isBestseller = false) => ({
+    image: plan.images?.[0] || "https://via.placeholder.com/400x300?text=No+Image",
+    title: plan.title,
+    beds: Number(plan.bedrooms || 0),
+    baths: Number(plan.bathrooms || 0),
+    sqft: String(Number(plan.floorArea || plan.square_feet || 0)),
+    price: String(Number(plan.price || 0)),
+    id: plan.id,
+    isBestseller,
+  });
+
+  const fallbackPopularPlans = housePlans
+    .filter((plan: any) => plan.isPopular)
+    .slice(0, 6)
+    .map((plan: any) => mapStaticPlanToCard(plan));
+
+  const fallbackBestSellingPlans = housePlans
+    .slice(0, 8)
+    .map((plan: any) => mapStaticPlanToCard(plan, true));
+
   const [loading, setLoading] = useState(true);
-  const [popularPlans, setPopularPlans] = useState<any[]>([]);
-  const [bestSellingPlans, setBestSellingPlans] = useState<any[]>([]);
+  const [popularPlans, setPopularPlans] = useState<any[]>(fallbackPopularPlans);
+  const [bestSellingPlans, setBestSellingPlans] = useState<any[]>(fallbackBestSellingPlans);
   const [homeVideoUrl, setHomeVideoUrl] = useState<string>("");
 
   // Fetch site settings and house plans from backend
@@ -121,16 +143,16 @@ const Index = () => {
             };
           });
 
-        setPopularPlans(popular.slice(0, 6));
-        setBestSellingPlans(bestSelling.slice(0, 8));
+        setPopularPlans(popular.length > 0 ? popular.slice(0, 6) : fallbackPopularPlans);
+        setBestSellingPlans(bestSelling.length > 0 ? bestSelling.slice(0, 8) : fallbackBestSellingPlans);
 
         try {
           localStorage.setItem(
             CACHE_KEY,
             JSON.stringify({
               timestamp: Date.now(),
-              popularPlans: popular.slice(0, 6),
-              bestSellingPlans: bestSelling.slice(0, 8),
+              popularPlans: popular.length > 0 ? popular.slice(0, 6) : fallbackPopularPlans,
+              bestSellingPlans: bestSelling.length > 0 ? bestSelling.slice(0, 8) : fallbackBestSellingPlans,
               homeVideoUrl: resolvedHomeVideoUrl,
             })
           );
@@ -194,11 +216,12 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {loading ? (
-                <div className="col-span-full h-64 flex items-center justify-center">
-                   <div className="animate-pulse text-muted-foreground">Loading premium plans...</div>
+              {loading && (
+                <div className="col-span-full text-center pb-4">
+                  <div className="animate-pulse text-muted-foreground">Loading latest plans...</div>
                 </div>
-              ) : popularPlans.length > 0 ? (
+              )}
+              {popularPlans.length > 0 ? (
                 popularPlans.map((plan, index) => (
                   <div key={index} className="animate-fade-up" style={{ animationDelay: `${index * 100}ms` }}>
                     <HousePlanCard {...plan} />
@@ -226,11 +249,12 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {loading ? (
-                <div className="col-span-full h-64 flex items-center justify-center">
-                   <div className="animate-pulse text-muted-foreground">Loading best-selling plans...</div>
+              {loading && (
+                <div className="col-span-full text-center pb-4">
+                  <div className="animate-pulse text-muted-foreground">Loading latest best-selling plans...</div>
                 </div>
-              ) : bestSellingPlans.length > 0 ? (
+              )}
+              {bestSellingPlans.length > 0 ? (
                 bestSellingPlans.map((plan, index) => (
                   <div key={index} className="animate-fade-up" style={{ animationDelay: `${index * 100}ms` }}>
                     <HousePlanCard {...plan} />

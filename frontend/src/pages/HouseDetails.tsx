@@ -97,7 +97,12 @@ export const HouseDetails = () => {
       }
 
       const cacheKey = `house-details-${id}-v1`;
-      const numericId = Number(id);
+      const staticPlan = [...housePlans, ...builtHomes].find((p) => String((p as any).id) === String(id));
+
+      if (staticPlan) {
+         setPlan(staticPlan);
+         setLoading(false);
+      }
 
       const transformPlan = (planData: any) => {
          const allImages = [
@@ -170,7 +175,6 @@ export const HouseDetails = () => {
                   // Ignore cache write issues
                }
         } else {
-               const staticPlan = housePlans.find((p) => p.id === numericId) || builtHomes.find((p) => p.id === numericId);
                if (!hasLoadedFromCache) {
                   setPlan(staticPlan || null);
                }
@@ -178,7 +182,6 @@ export const HouseDetails = () => {
       } catch (error) {
         console.error('Error fetching plan:', error);
             if (!hasLoadedFromCache) {
-               const staticPlan = housePlans.find((p) => p.id === numericId) || builtHomes.find((p) => p.id === numericId);
                setPlan(staticPlan || null);
             }
       } finally {
