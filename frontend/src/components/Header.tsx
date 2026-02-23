@@ -1,8 +1,7 @@
-import { Home, Search, X, MessageCircle, Menu, Download } from "lucide-react";
+import { Home, Search, X, Menu, Download } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
-import { chatBotRef } from "./ChatBot";
 import { ThemeToggle } from "./ThemeToggle";
 import { API_ENDPOINTS } from "@/config/constants";
 
@@ -123,16 +122,6 @@ const Header = ({ hideNavLinks = false }: HeaderProps) => {
           {/* Theme Toggle */}
           <ThemeToggle />
 
-          {/* Munyai AI Button */}
-          <Button 
-            onClick={() => chatBotRef.current?.open()}
-            variant="outline"
-            className="hidden sm:flex border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary gap-2 h-10 px-4 rounded-full"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span className="hidden md:inline">Munyai AI</span>
-          </Button>
-
           {/* Get Quote Button - Gradient CTA */}
           <Link to="/get-quote">
             <Button className="bg-gradient-to-r from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-white font-semibold shadow-lg shadow-primary/25 h-10 px-6 rounded-full transition-all hover:scale-105 active:scale-95">
@@ -180,18 +169,6 @@ const Header = ({ hideNavLinks = false }: HeaderProps) => {
                 </span>
               </Link>
             ))}
-
-            {/* Mobile AI Button */}
-            <button
-              onClick={() => {
-                chatBotRef.current?.open();
-                setIsMobileMenuOpen(false);
-              }}
-              className="w-full block px-4 py-2 text-base font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md transition-all flex items-center justify-center gap-2 mt-4"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Munyai AI
-            </button>
 
             {/* Mobile Get Quote Button */}
             <Link
