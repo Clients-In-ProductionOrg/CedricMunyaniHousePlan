@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Square, ArrowRight, Share2, Download, Eye, EyeOff } from 'lucide-react';
+import { Grid3x3, List, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Square, ArrowRight, Share2, Download, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1786,14 +1786,6 @@ export const HousePlans = () => {
           </div>
         </div>
       </div>
-
-      {/* Help Button */}
-      <Button
-        size="lg"
-        className="fixed bottom-6 right-6 rounded-full h-14 w-14 shadow-lg"
-      >
-        <CircleHelp className="h-6 w-6" />
-      </Button>
 
       {/* Filter Drawer (Mobile) */}
       <Drawer open={isFilterDrawerOpen} onOpenChange={setIsFilterDrawerOpen}>
