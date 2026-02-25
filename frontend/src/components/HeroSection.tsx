@@ -1,4 +1,4 @@
-import { Search, Star } from "lucide-react";
+import { Search, Star, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -40,11 +40,13 @@ const HeroSection = ({ homeVideoUrl }: HeroSectionProps) => {
   return (
     <section className="relative min-h-[90vh] flex items-center pt-20 pb-32 overflow-hidden bg-background">
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-1/3 h-full bg-primary/5 -skew-x-12 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/30 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2" />
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-bl from-primary/10 via-blue-500/5 to-transparent -z-10" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/30 rounded-full blur-[100px] -translate-x-1/2 translate-y-1/2" />
       
       <div className="container relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid lg:grid-cols-[1fr_1.1fr] gap-12 lg:gap-16 items-center">
+            
+            {/* Left Text Section */}
             <div className="space-y-10 animate-fade-up">
               <div className="space-y-6">
                 <Badge variant="outline" className="px-4 py-1.5 border-primary/20 bg-primary/5 text-primary rounded-full text-sm font-medium animate-fade-in shadow-sm">
@@ -106,34 +108,46 @@ const HeroSection = ({ homeVideoUrl }: HeroSectionProps) => {
               </div>
             </div>
             
-            <div className="relative animate-fade-in delay-200">
-              {/* Main Video Container */}
-              <div className="relative w-full aspect-video lg:aspect-[4/3] rounded-[2rem] overflow-hidden shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] border-[6px] border-white dark:border-card/20 isolate">
-                  {/* Iframe with scalling to cover - removing black bars */}
-                  <div className="absolute inset-[-10%] w-[120%] h-[120%] bg-black">
+            {/* Right Video Section */}
+            <div className="relative animate-fade-in delay-200 lg:ml-4 group">
+              {/* Glowing background effect */}
+              <div className="absolute -inset-2 bg-gradient-to-tr from-primary/40 via-blue-500/20 to-purple-500/40 rounded-[2.5rem] blur-2xl opacity-60 group-hover:opacity-100 transition-opacity duration-700 -z-10" />
+              
+              {/* Video Container - Sleek and borderless */}
+              <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] bg-black isolate transform transition-transform duration-700 hover:scale-[1.02]">
+                  
+                  {/* Iframe Container */}
+                  <div className="absolute inset-0 bg-black">
                      <iframe 
                         src={embedUrl} 
-                        className="w-full h-full opacity-100 pointer-events-none scale-110"
+                        className="w-full h-full opacity-90 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none scale-105"
                         allow="autoplay; encrypted-media"
                         title="Hero Video"
                      />
                   </div>
                   
-                  {/* Gradient Overlays for integration */}
-                  <div className="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-[2rem] z-10 pointer-events-none" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent z-10 pointer-events-none" />
+                  {/* Gradient Overlays */}
+                  <div className="absolute inset-0 ring-1 ring-inset ring-white/20 rounded-[2rem] z-10 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent z-10 pointer-events-none opacity-80 group-hover:opacity-60 transition-opacity duration-700" />
 
                   {/* Floating Elements on top of Video */}
-                  <div className="absolute bottom-6 right-6 z-20">
-                    <div className="hidden sm:flex bg-white/90 dark:bg-black/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/20 items-center justify-center w-12 h-12 shrink-0 animate-pulse">
-                      <div className="w-3 h-3 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]" />
+                  <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end">
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl shadow-2xl transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 hidden sm:block">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        <span className="text-[10px] text-white/80 font-bold tracking-wider uppercase">Live Showcase</span>
+                      </div>
+                      <p className="text-white font-bold text-base">Modern Luxury Villa</p>
+                    </div>
+                    
+                    <div className="flex bg-primary text-primary-foreground p-4 rounded-full shadow-[0_0_30px_rgba(var(--primary),0.5)] items-center justify-center w-14 h-14 shrink-0 hover:scale-110 transition-transform cursor-pointer ml-auto group-hover:bg-white group-hover:text-primary">
+                      <Play className="w-6 h-6 ml-1" fill="currentColor" />
                     </div>
                   </div>
               </div>
-
-               {/* Decorative background blur behind video */}
-               <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 to-blue-500/20 rounded-[2.5rem] blur-xl -z-10 opacity-70" />
+              
             </div>
+            
         </div>
       </div>
     </section>
