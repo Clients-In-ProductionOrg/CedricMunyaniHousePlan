@@ -37,6 +37,18 @@ import { ImageGallery } from '@/components/ImageGallery';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import Header from '@/components/Header';
 
+const PROVINCE_OPTIONS = [
+  { value: 'eastern_cape', label: 'Eastern Cape' },
+  { value: 'free_state', label: 'Free State' },
+  { value: 'gauteng', label: 'Gauteng' },
+  { value: 'kwazulu_natal', label: 'KwaZulu-Natal' },
+  { value: 'limpopo', label: 'Limpopo' },
+  { value: 'mpumalanga', label: 'Mpumalanga' },
+  { value: 'north_west', label: 'North West' },
+  { value: 'northern_cape', label: 'Northern Cape' },
+  { value: 'western_cape', label: 'Western Cape' },
+];
+
 // BuiltHomeCard Component
 function BuiltHomeCard({ plan }: { plan: HousePlan }) {
   const navigate = useNavigate();
@@ -669,9 +681,7 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                   {showPasswordMismatch && (
                     <p className="text-xs text-red-600 mb-2">Passwords do not match.</p>
                   )}
-                  <input
-                    type="text"
-                    placeholder="Province"
+                  <select
                     value={contactInfo.province}
                     onChange={(e) => {
                       setContactInfo({ ...contactInfo, province: e.target.value });
@@ -679,8 +689,15 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
                         setMissingFields({ ...missingFields, province: false });
                       }
                     }}
-                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.province ? 'border-red-500' : ''}`}
-                  />
+                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm bg-white ${missingFields.province ? 'border-red-500' : ''}`}
+                  >
+                    <option value="">Select Province</option>
+                    {PROVINCE_OPTIONS.map((province) => (
+                      <option key={province.value} value={province.value}>
+                        {province.label}
+                      </option>
+                    ))}
+                  </select>
                   <input
                     type="text"
                     placeholder="City"

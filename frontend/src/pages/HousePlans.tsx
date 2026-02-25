@@ -38,6 +38,18 @@ import { ImageGallery } from '@/components/ImageGallery';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import Header from '@/components/Header';
 
+const PROVINCE_OPTIONS = [
+  { value: 'eastern_cape', label: 'Eastern Cape' },
+  { value: 'free_state', label: 'Free State' },
+  { value: 'gauteng', label: 'Gauteng' },
+  { value: 'kwazulu_natal', label: 'KwaZulu-Natal' },
+  { value: 'limpopo', label: 'Limpopo' },
+  { value: 'mpumalanga', label: 'Mpumalanga' },
+  { value: 'north_west', label: 'North West' },
+  { value: 'northern_cape', label: 'Northern Cape' },
+  { value: 'western_cape', label: 'Western Cape' },
+];
+
 // Helper function to convert YouTube URLs to embed format
 function convertYoutubeUrl(url: string): string {
   if (!url) return '';
@@ -781,17 +793,23 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                          <Label>Province</Label>
-                         <Input 
-                            placeholder="e.g. Gauteng" 
+                         <select
                             value={contactInfo.province}
-                           onChange={(e) => {
-                            setContactInfo({...contactInfo, province: e.target.value});
-                            if (missingFields.province) {
-                              setMissingFields({ ...missingFields, province: false });
-                            }
-                           }}
-                           className={missingFields.province ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                         />
+                            onChange={(e) => {
+                              setContactInfo({ ...contactInfo, province: e.target.value });
+                              if (missingFields.province) {
+                                setMissingFields({ ...missingFields, province: false });
+                              }
+                            }}
+                            className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background ${missingFields.province ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                         >
+                           <option value="">Select province</option>
+                           {PROVINCE_OPTIONS.map((province) => (
+                             <option key={province.value} value={province.value}>
+                               {province.label}
+                             </option>
+                           ))}
+                         </select>
                       </div>
                       <div className="space-y-2">
                          <Label>City</Label>

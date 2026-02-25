@@ -13,7 +13,6 @@ import {
   MapPin, 
   Facebook, 
   MessageCircle, 
-  Music, 
   Home, 
   Send,
   CheckCircle2,
@@ -23,6 +22,17 @@ import {
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/constants';
 import house4 from '@/assets/house4.jpg'; // Using house4 for diversity
+
+const TikTokIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.35V2h-3.2v13.14a2.89 2.89 0 1 1-2-2.74V9.17a6.08 6.08 0 1 0 5.2 6V8.5a8.03 8.03 0 0 0 4.8 1.6V6.9c-.35 0-.7-.07-1.03-.2Z" />
+  </svg>
+);
 
 interface SiteSettings {
   phone: string;
@@ -275,9 +285,9 @@ const Contact = () => {
                                          <Facebook className="w-5 h-5" />
                                      </a>
                                      <a href="https://www.tiktok.com/@cedrichouseplanning" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-pink-600/10 text-pink-600 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all">
-                                         <Music className="w-5 h-5" />
+                                       <TikTokIcon className="w-5 h-5" />
                                      </a>
-                                     <a href="https://wa.me/0695885837" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-green-600/10 text-green-600 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all">
+                                     <a href="https://wa.me/27726659790" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-green-600/10 text-green-600 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all">
                                          <MessageCircle className="w-5 h-5" />
                                      </a>
                                  </div>

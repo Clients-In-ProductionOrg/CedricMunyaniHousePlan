@@ -137,6 +137,13 @@ def create_purchase(request):
                 'error': 'Phone number must be exactly 10 digits. Please check for missing or extra digits.'
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        province_value = _normalize_province_key(data.get('province') or '')
+        if not province_value:
+            return Response({
+                'success': False,
+                'error': f"Province must be one of: {', '.join(PROVINCE_VALUE_TO_LABEL.values())}."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         existing_purchases = Purchase.objects.filter(phone_number=phone_number)
         for existing_purchase in existing_purchases:
             if existing_purchase.secret_password_hash and check_password(secret_password, existing_purchase.secret_password_hash):
@@ -151,7 +158,7 @@ def create_purchase(request):
             full_name=data.get('full_name'),
             email=data.get('email'),
             phone_number=phone_number,
-            province=data.get('province'),
+            province=province_value,
             city=data.get('city'),
             pick_up_point=data.get('pick_up_point', ''),
             area_mall=data.get('area_mall', ''),
@@ -308,6 +315,39 @@ def _get_frontend_base(request) -> str:
 
 def _normalize_phone_number(phone: str) -> str:
     return ''.join(char for char in str(phone) if char.isdigit())
+
+
+PROVINCE_VALUE_TO_LABEL = {
+    'eastern_cape': 'Eastern Cape',
+    'free_state': 'Free State',
+    'gauteng': 'Gauteng',
+    'kwazulu_natal': 'KwaZulu-Natal',
+    'limpopo': 'Limpopo',
+    'mpumalanga': 'Mpumalanga',
+    'north_west': 'North West',
+    'northern_cape': 'Northern Cape',
+    'western_cape': 'Western Cape',
+}
+
+
+def _normalize_province_key(value: str) -> str:
+    cleaned = ''.join(char for char in str(value).strip().lower() if char.isalnum())
+    if not cleaned:
+        return ''
+
+    province_aliases = {
+        'easterncape': 'eastern_cape',
+        'freestate': 'free_state',
+        'gauteng': 'gauteng',
+        'kwazulunatal': 'kwazulu_natal',
+        'limpopo': 'limpopo',
+        'mpumalanga': 'mpumalanga',
+        'northwest': 'north_west',
+        'northerncape': 'northern_cape',
+        'westerncape': 'western_cape',
+    }
+
+    return province_aliases.get(cleaned, '')
 
 
 def _build_signature(purchase_id: str, action: str, return_url: str, expires: int) -> str:
