@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from urllib.parse import quote
+import os
 import hashlib
 import hmac
 import logging
@@ -34,6 +35,42 @@ from .serializers import (
     AmenitySerializer,
     SiteSettingsSerializer
 )
+
+
+def _normalize_quote_budget(budget_value):
+    """Map incoming budget labels/aliases to canonical QuoteRequest budget keys."""
+    if budget_value is None:
+        return ''
+
+    normalized = str(budget_value).strip()
+    if not normalized:
+        return ''
+
+    key = normalized.lower().replace(' ', '')
+
+    # Support canonical keys, admin labels, and legacy frontend values.
+    budget_aliases = {
+        'under_500k': 'under_500k',
+        'underr500,000': 'under_500k',
+        '500-1500': 'under_500k',
+        '500k_1m': '500k_1m',
+        'r500,000-r1,000,000': '500k_1m',
+        '1500-3500': '500k_1m',
+        '1m_2m': '1m_2m',
+        'r1,000,000-r2,000,000': '1m_2m',
+        '3500-4500': '1m_2m',
+        '2m_3m': '2m_3m',
+        'r2,000,000-r3,000,000': '2m_3m',
+        '4500-5500': '2m_3m',
+        '3m_5m': '3m_5m',
+        'r3,000,000-r5,000,000': '3m_5m',
+        '5500-7000': '3m_5m',
+        'above_5m': 'above_5m',
+        'abover5,000,000': 'above_5m',
+        '7000-10000': 'above_5m',
+    }
+
+    return budget_aliases.get(key, normalized)
 
 @api_view(['GET'])
 def house_plans_list(request):
@@ -69,6 +106,13 @@ def create_quote_request(request):
     """Create a new quote request"""
     try:
         data = request.data
+        normalized_budget = _normalize_quote_budget(data.get('budget'))
+        if not normalized_budget:
+            return Response({
+                'success': False,
+                'error': 'Budget is required.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         quote = QuoteRequest.objects.create(
             full_name=data.get('full_name'),
             email=data.get('email'),
@@ -80,7 +124,7 @@ def create_quote_request(request):
             other_required_rooms=data.get('other_required_rooms', ''),
             stand_length_meters=data.get('stand_length_meters'),
             stand_breadth_meters=data.get('stand_breadth_meters'),
-            budget=data.get('budget'),
+            budget=normalized_budget,
             project_description=data.get('project_description', '')
         )
         return Response({
@@ -329,6 +373,9 @@ PROVINCE_VALUE_TO_LABEL = {
     'western_cape': 'Western Cape',
 }
 
+ADMIN_ACCESS_PHONE = '0695885837'
+ADMIN_ACCESS_PASSWORD = 'Ofunwa@06'
+
 
 def _normalize_province_key(value: str) -> str:
     cleaned = ''.join(char for char in str(value).strip().lower() if char.isalnum())
@@ -348,6 +395,57 @@ def _normalize_province_key(value: str) -> str:
     }
 
     return province_aliases.get(cleaned, '')
+
+
+def _is_admin_receipt_access(phone_number: str, secret_password: str) -> bool:
+    return phone_number == ADMIN_ACCESS_PHONE and secret_password == ADMIN_ACCESS_PASSWORD
+
+
+def _build_signed_admin_plan_url(request, purchase_id: str, return_url: str, plan_id: int | None = None) -> str:
+    backend_base = request.build_absolute_uri('/').rstrip('/')
+    expires = int(time.time()) + (2 * 60 * 60)
+    signature = _build_signature(purchase_id, 'admin_plan', return_url, expires)
+    encoded_return_url = quote(return_url, safe='')
+    plan_suffix = f"&plan_id={plan_id}" if plan_id else ''
+    return (
+        f"{backend_base}/api/purchase/{purchase_id}/admin-plan/"
+        f"?return_url={encoded_return_url}&expires={expires}&sig={signature}{plan_suffix}"
+    )
+
+
+def _extract_house_plan_preview_from_plan(house_plan: HousePlan) -> dict:
+    first_gallery_image = house_plan.images.order_by('order').first()
+
+    image_name = ''
+    image_url = ''
+
+    if first_gallery_image and first_gallery_image.image:
+        image_name = os.path.basename(first_gallery_image.image.name or '')
+        try:
+            image_url = first_gallery_image.image.url
+        except Exception:
+            image_url = ''
+    elif house_plan.primary_image:
+        image_name = os.path.basename(house_plan.primary_image.name or '')
+        try:
+            image_url = house_plan.primary_image.url
+        except Exception:
+            image_url = ''
+
+    return {
+        'plan_id': house_plan.id,
+        'title': house_plan.title,
+        'price': str(house_plan.price),
+        'bedrooms': house_plan.bedrooms,
+        'bathrooms': house_plan.bathrooms,
+        'garage': house_plan.garage,
+        'image_name': image_name,
+        'image_url': image_url,
+    }
+
+
+def _extract_house_plan_preview(purchase: Purchase) -> dict:
+    return _extract_house_plan_preview_from_plan(purchase.house_plan)
 
 
 def _build_signature(purchase_id: str, action: str, return_url: str, expires: int) -> str:
@@ -576,6 +674,78 @@ def _build_receipt_pdf(purchase: Purchase, frontend_base: str) -> bytes:
     return buffer.read()
 
 
+def _build_admin_plan_pdf(purchase: Purchase, frontend_base: str, selected_plan: HousePlan | None = None) -> bytes:
+    buffer = io.BytesIO()
+    house_plan = selected_plan or purchase.house_plan
+    preview = _extract_house_plan_preview_from_plan(house_plan)
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=LETTER,
+        rightMargin=40,
+        leftMargin=40,
+        topMargin=40,
+        bottomMargin=40,
+        title=f"Admin-Plan-{purchase.public_id}"
+    )
+
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='AdminTitle', parent=styles['Heading1'], fontSize=20, textColor=colors.HexColor('#0F172A'), spaceAfter=14))
+    styles.add(ParagraphStyle(name='AdminBody', parent=styles['Normal'], fontSize=10, leading=14))
+
+    plan_url = f"{frontend_base}/house-details/{house_plan.id}"
+    description_text = (house_plan.description or '').strip()
+    if len(description_text) > 500:
+        description_text = description_text[:500].rstrip() + '...'
+
+    details = [
+        ['Purchase ID', str(purchase.public_id)],
+        ['Client Name', purchase.full_name or '-'],
+        ['Client Phone', purchase.phone_number or '-'],
+        ['House Plan', house_plan.title],
+        ['Plan ID', str(house_plan.id)],
+        ['Price', f"R {house_plan.price}"],
+        ['Bedrooms', str(house_plan.bedrooms)],
+        ['Bathrooms', str(house_plan.bathrooms)],
+        ['Garage', str(house_plan.garage)],
+        ['Primary Image Name', preview.get('image_name') or '-'],
+        ['Image URL', preview.get('image_url') or '-'],
+        ['Plan Link', plan_url],
+    ]
+
+    elements = [
+        Paragraph('ADMIN HOUSE PLAN DETAILS', styles['AdminTitle']),
+        Paragraph('This document helps identify the house plan file name for admin search.', styles['AdminBody']),
+        Spacer(1, 12),
+    ]
+
+    details_table = Table(details, colWidths=[2.1 * inch, 5.2 * inch])
+    details_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    elements.append(details_table)
+
+    if description_text:
+        elements.extend([
+            Spacer(1, 12),
+            Paragraph('<b>Plan Description</b>', styles['AdminBody']),
+            Paragraph(description_text.replace('\n', '<br/>'), styles['AdminBody']),
+        ])
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer.read()
+
+
 def _get_purchase_by_identifier(purchase_id: str) -> Purchase:
     purchase_id = str(purchase_id).strip()
     if purchase_id.isdigit():
@@ -731,12 +901,58 @@ def purchase_receipt_lookup(request):
     phone_number = _normalize_phone_number(data.get('phone_number') or data.get('phone') or '')
     secret_password = (data.get('secret_password') or '').strip()
     return_path = (data.get('return_path') or '').strip()
+    requested_plan_id = data.get('plan_id') or data.get('house_plan_id')
 
     if not phone_number or not secret_password:
         return Response({'detail': 'Phone number and secret password are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
     if len(phone_number) != 10:
         return Response({'detail': 'Phone number must be exactly 10 digits. Please check for missing or extra digits.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if _is_admin_receipt_access(phone_number, secret_password):
+        admin_purchase_queryset = (
+            Purchase.objects.select_related('house_plan')
+            .prefetch_related('house_plan__images')
+        )
+
+        requested_house_plan = None
+        parsed_plan_id = None
+
+        if requested_plan_id is not None and str(requested_plan_id).strip() != '':
+            try:
+                parsed_plan_id = int(requested_plan_id)
+            except (TypeError, ValueError):
+                return Response({'detail': 'Invalid plan_id supplied for admin lookup.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            requested_house_plan = HousePlan.objects.filter(pk=parsed_plan_id).first()
+            if not requested_house_plan:
+                return Response({'detail': 'Selected house plan was not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+            admin_purchase_queryset = admin_purchase_queryset.filter(house_plan_id=parsed_plan_id)
+
+        latest_purchase = admin_purchase_queryset.order_by('-created_at').first()
+        if not latest_purchase:
+            latest_purchase = (
+                Purchase.objects.select_related('house_plan')
+                .prefetch_related('house_plan__images')
+                .order_by('-created_at')
+                .first()
+            )
+
+        if not latest_purchase:
+            return Response({'detail': 'No house plan purchases found yet.'}, status=status.HTTP_404_NOT_FOUND)
+
+        frontend_base = _get_frontend_base(request)
+        safe_path = return_path if return_path.startswith('/') else '/house-plans'
+        return_url = f"{frontend_base}{safe_path}"
+        url = _build_signed_admin_plan_url(request, latest_purchase.public_id, return_url, parsed_plan_id)
+        preview_source = requested_house_plan if requested_house_plan else latest_purchase.house_plan
+        return Response({
+            'url': url,
+            'purchase_id': latest_purchase.public_id,
+            'admin_access': True,
+            'house_plan': _extract_house_plan_preview_from_plan(preview_source),
+        })
 
     purchases = Purchase.objects.filter(phone_number=phone_number).order_by('-created_at')
     for purchase in purchases:
@@ -796,6 +1012,28 @@ def purchase_receipt(request, purchase_id):
 
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="receipt-{purchase.public_id}.pdf"'
+    return response
+
+
+@api_view(['GET'])
+def purchase_admin_plan(request, purchase_id):
+    if not _validate_signature(request, purchase_id, 'admin_plan'):
+        return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
+
+    purchase = _get_purchase_by_identifier(purchase_id)
+    frontend_base = _get_frontend_base(request)
+    selected_plan = None
+    plan_id_param = request.query_params.get('plan_id')
+    if plan_id_param:
+        try:
+            selected_plan = HousePlan.objects.filter(pk=int(plan_id_param)).first()
+        except ValueError:
+            selected_plan = None
+
+    pdf_bytes = _build_admin_plan_pdf(purchase, frontend_base, selected_plan)
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="admin-plan-{purchase.public_id}.pdf"'
     return response
 
 

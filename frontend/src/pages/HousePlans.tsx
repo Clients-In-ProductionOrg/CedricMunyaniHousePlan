@@ -238,6 +238,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
         body: JSON.stringify({
           phone_number: receiptLookup.phone,
           secret_password: receiptLookup.secretPassword,
+          plan_id: plan.id,
           return_path: `${window.location.pathname}${window.location.search}`,
         })
       });
@@ -1155,6 +1156,20 @@ export const HousePlans = () => {
         throw new Error(data.detail || 'Unable to download receipt.');
       }
 
+      if (data.admin_access && data.house_plan) {
+        const planDetails = data.house_plan;
+        const adminMessage = [
+          'Admin access granted.',
+          `Plan: ${planDetails.title || '-'}`,
+          `Plan ID: ${planDetails.plan_id || '-'}`,
+          `Price: R ${planDetails.price || '-'}`,
+          `Bedrooms: ${planDetails.bedrooms ?? '-'}`,
+          `Bathrooms: ${planDetails.bathrooms ?? '-'}`,
+          `Image Name: ${planDetails.image_name || 'No image found'}`,
+        ].join('\n');
+        alert(adminMessage);
+      }
+
       setShowGlobalReceiptModal(false);
       window.location.href = data.url;
     } catch (error: any) {
@@ -1497,6 +1512,31 @@ export const HousePlans = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+  const getVisiblePaginationPages = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const visiblePages: Array<number | 'ellipsis-left' | 'ellipsis-right'> = [1];
+    const startPage = Math.max(2, currentPage - 1);
+    const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+    if (startPage > 2) {
+      visiblePages.push('ellipsis-left');
+    }
+
+    for (let page = startPage; page <= endPage; page += 1) {
+      visiblePages.push(page);
+    }
+
+    if (endPage < totalPages - 1) {
+      visiblePages.push('ellipsis-right');
+    }
+
+    visiblePages.push(totalPages);
+    return visiblePages;
+  };
+  const visiblePaginationPages = getVisiblePaginationPages();
 
   const handleClearFilters = () => {
     setFilters({});
@@ -1754,38 +1794,27 @@ export const HousePlans = () => {
                       />
                     </PaginationItem>
 
-                    {[...Array(Math.min(totalPages, 3))].map((_, i) => {
-                      const pageNum = i + 1;
+                    {visiblePaginationPages.map((item, index) => {
+                      if (typeof item !== 'number') {
+                        return (
+                          <PaginationItem key={`${item}-${index}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
+
                       return (
-                        <PaginationItem key={pageNum}>
+                        <PaginationItem key={item}>
                           <PaginationLink
-                            onClick={() => setCurrentPage(pageNum)}
-                            isActive={currentPage === pageNum}
+                            onClick={() => setCurrentPage(item)}
+                            isActive={currentPage === item}
                             className="cursor-pointer"
                           >
-                            {pageNum}
+                            {item}
                           </PaginationLink>
                         </PaginationItem>
                       );
                     })}
-
-                    {totalPages > 4 && (
-                      <PaginationItem>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    )}
-
-                    {totalPages > 3 && (
-                      <PaginationItem>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(totalPages)}
-                          isActive={currentPage === totalPages}
-                          className="cursor-pointer"
-                        >
-                          {totalPages}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )}
 
                     <PaginationItem>
                       <PaginationNext

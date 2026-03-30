@@ -228,7 +228,7 @@ class RoomAdmin(admin.ModelAdmin):
 
 @admin.register(QuoteRequest)
 class QuoteRequestAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'email', 'phone_number', 'city', 'bedrooms', 'bathrooms', 'budget', 'is_reviewed', 'created_at')
+    list_display = ('full_name', 'email', 'phone_number', 'city', 'bedrooms', 'bathrooms', 'budget_display', 'is_reviewed', 'created_at')
     list_filter = ('is_reviewed', 'preferred_style', 'budget', 'bedrooms', 'bathrooms', 'created_at')
     search_fields = ('full_name', 'email', 'phone_number', 'city')
     readonly_fields = ('created_at', 'updated_at')
@@ -250,6 +250,25 @@ class QuoteRequestAdmin(admin.ModelAdmin):
             'fields': ('is_reviewed', 'created_at', 'updated_at')
         }),
     )
+
+    @admin.display(description='Budget')
+    def budget_display(self, obj):
+        budget_map = {
+            'under_500k': '500 - 1500',
+            '500k_1m': '1500 - 3500',
+            '1m_2m': '3500 - 4500',
+            '2m_3m': '4500 - 5500',
+            '3m_5m': '5500 - 7000',
+            'above_5m': '7000 - 10000',
+            'Under R500,000': '500 - 1500',
+            'R500,000 - R1,000,000': '1500 - 3500',
+            'R1,000,000 - R2,000,000': '3500 - 4500',
+            'R2,000,000 - R3,000,000': '4500 - 5500',
+            'R3,000,000 - R5,000,000': '5500 - 7000',
+            'Above R5,000,000': '7000 - 10000',
+        }
+        value = obj.budget or ''
+        return budget_map.get(value, obj.get_budget_display() or value or '-')
 
 
 @admin.register(ContactMessage)

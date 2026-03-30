@@ -90,6 +90,8 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const submittedData = { ...formData };
+
     try {
         // API call logic
       const contactUrl = API_ENDPOINTS.CONTACTS;
@@ -108,8 +110,27 @@ const Contact = () => {
       });
 
       if (response.ok) {
+        const messageLines = [
+          'Hello Cedric House Plan Team,',
+          '',
+          'I have submitted a contact request. Here are my details:',
+          '',
+          `*Full Name:* ${submittedData.name || 'N/A'}`,
+          `*Email:* ${submittedData.email || 'N/A'}`,
+          `*Phone Number:* ${submittedData.phone || 'N/A'}`,
+          `*Subject:* ${submittedData.subject || 'N/A'}`,
+          `*Message:* ${submittedData.message || 'N/A'}`,
+        ];
+        const whatsappText = encodeURIComponent(messageLines.join('\n'));
+        const whatsappUrl = `https://api.whatsapp.com/send/?phone=27726659790&text=${whatsappText}&type=phone_number&app_absent=0`;
+
         setShowSuccessModal(true);
         setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+
+        // Show success message first, then redirect automatically.
+        setTimeout(() => {
+          window.location.assign(whatsappUrl);
+        }, 1500);
 
         // Auto-close modal
         setTimeout(() => {

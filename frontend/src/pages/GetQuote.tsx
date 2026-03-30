@@ -70,6 +70,14 @@ const GetQuote = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
+        const submittedData = { ...formData };
+
+        if (!submittedData.budget) {
+            alert('Please select your budget range before submitting.');
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const response = await fetch(API_ENDPOINTS.QUOTES, {
                 method: 'POST',
@@ -93,6 +101,30 @@ const GetQuote = () => {
             });
 
             if (response.ok) {
+                const styleLabel = submittedData.preferredStyle === 'Other'
+                    ? (submittedData.customStyle || 'Other')
+                    : (submittedData.preferredStyle || 'Not sure');
+                const messageLines = [
+                    'Hello Cedric House Plan Team,',
+                    '',
+                    'I have submitted a quotation request. Here are my details:',
+                    '',
+                    '*Full Name:* ' + (submittedData.fullName || 'N/A'),
+                    '*Email:* ' + (submittedData.email || 'N/A'),
+                    '*Phone Number:* ' + (submittedData.phone || 'N/A'),
+                    '*City:* ' + (submittedData.city || 'N/A'),
+                    '*Preferred Style:* ' + styleLabel,
+                    '*Bedrooms:* ' + (submittedData.bedrooms || 'N/A'),
+                    '*Bathrooms:* ' + (submittedData.bathrooms || 'N/A'),
+                    '*Other Required Rooms:* ' + (submittedData.otherRooms || 'N/A'),
+                    '*Stand Length (m):* ' + (submittedData.yardLength || 'N/A'),
+                    '*Stand Breadth (m):* ' + (submittedData.yardBreadth || 'N/A'),
+                    '*Budget Range:* ' + (budgetOptions.find((option) => option.value === submittedData.budget)?.label || submittedData.budget || 'N/A'),
+                    '*Project Description:* ' + (submittedData.description || 'N/A'),
+                ];
+                const whatsappText = encodeURIComponent(messageLines.join('\n'));
+                const whatsappUrl = `https://api.whatsapp.com/send/?phone=27726659790&text=${whatsappText}&type=phone_number&app_absent=0`;
+
                 setSubmitted(true);
                 setFormData({
                     fullName: '',
@@ -110,6 +142,7 @@ const GetQuote = () => {
                     description: '',
                 });
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.location.assign(whatsappUrl);
             } else {
                 const errorData = await response.json();
                 alert('Error submitting quote: ' + (errorData.error || 'Please try again.'));
@@ -129,10 +162,12 @@ const GetQuote = () => {
     ];
 
     const budgetOptions = [
-        'R1,000 - R1,500', 'R2,000 - R2,500', 'R3,000 - R3,500',
-        'R4,000 - R4,500', 'R5,000 - R5,500', 'R6,000 - R6,500',
-        'R7,000 - R7,500', 'R8,000 - R8,500', 'R9,000 - R9,500',
-        'R10,000+', 'Not sure yet',
+        { value: 'under_500k', label: '500 - 1500' },
+        { value: '500k_1m', label: '1500 - 3500' },
+        { value: '1m_2m', label: '3500 - 4500' },
+        { value: '2m_3m', label: '4500 - 5500' },
+        { value: '3m_5m', label: '5500 - 7000' },
+        { value: 'above_5m', label: '7000 - 10000' },
     ];
 
     return (
@@ -495,7 +530,7 @@ const GetQuote = () => {
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {budgetOptions.map(option => (
-                                                                <SelectItem key={option} value={option}>{option}</SelectItem>
+                                                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
