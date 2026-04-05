@@ -1457,11 +1457,26 @@ export const HousePlans = () => {
       );
     }
 
-    // Apply search query
+    // Apply search query (supports plan title and image filename lookup)
     if (searchQuery.trim()) {
-      filtered = filtered.filter((plan) =>
-        plan.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const normalizedQuery = searchQuery.trim().toLowerCase();
+      filtered = filtered.filter((plan) => {
+        const titleMatches = plan.title.toLowerCase().includes(normalizedQuery);
+        const imageMatches = plan.images.some((imagePath) => {
+          const decodedPath = decodeURIComponent(String(imagePath || '')).toLowerCase();
+          const cleanPath = decodedPath.split('?')[0].split('#')[0];
+          const fileName = cleanPath.split('/').pop() || '';
+          const fileNameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
+
+          return (
+            decodedPath.includes(normalizedQuery) ||
+            fileName.includes(normalizedQuery) ||
+            fileNameWithoutExt.includes(normalizedQuery)
+          );
+        });
+
+        return titleMatches || imageMatches;
+      });
     }
 
     // Sort
