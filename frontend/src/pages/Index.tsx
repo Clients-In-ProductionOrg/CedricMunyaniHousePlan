@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import HousePlanCard from "@/components/HousePlanCard";
-import TestimonialCard from "@/components/TestimonialCard";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import { API_ENDPOINTS } from "@/config/constants";
@@ -172,31 +171,6 @@ const Index = () => {
     fetchData();
   }, []);
 
-  // Testimonials Data
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "Verified Customer",
-      content: "The process was seamless and the plans were exactly what we needed. Our builder was impressed with the quality and detail.",
-      rating: 5,
-      initials: "SJ"
-    },
-    {
-      name: "Michael Chen",
-      role: "Verified Customer",
-      content: "Outstanding customer service and beautiful designs. We found our dream home plan and couldn't be happier with the result.",
-      rating: 5,
-      initials: "MC"
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Verified Customer",
-      content: "Professional, detailed plans that saved us time and money. The customization options were perfect for our needs.",
-      rating: 5,
-      initials: "ER"
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
       <Header />
@@ -263,26 +237,6 @@ const Index = () => {
               ) : (
                 <p className="col-span-full text-center text-muted-foreground py-12">No best-selling plans available. Check back soon!</p>
               )}
-            </div>
-          </div>
-        </section>
-
-        {/* TESTIMONIALS SECTION */}
-        <section className="py-24 bg-background">
-          <div className="container">
-            <div className="text-center space-y-4 mb-16 animate-fade-in">
-              <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">What Our Customers Say</h2>
-              <p className="text-lg text-muted-foreground">
-                Join thousands of satisfied homeowners who trusted us with their dream.
-              </p>
-            </div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {testimonials.map((testimonial, index) => (
-                <div key={index} className="animate-scale-in" style={{ animationDelay: `${index * 150}ms` }}>
-                  <TestimonialCard {...testimonial} />
-                </div>
-              ))}
             </div>
           </div>
         </section>
