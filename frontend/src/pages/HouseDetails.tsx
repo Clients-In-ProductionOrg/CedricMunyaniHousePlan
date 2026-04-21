@@ -140,6 +140,16 @@ export const HouseDetails = () => {
             isPopular: planData.is_popular || false,
             images: images,
             description: planData.description || '',
+            firstFloorDescription: planData.first_floor_description || '',
+            secondFloorDescription: planData.second_floor_description || '',
+            thirdFloorDescription: planData.third_floor_description || '',
+            fourthFloorDescription: planData.fourth_floor_description || '',
+            fifthFloorDescription: planData.fifth_floor_description || '',
+            sixthFloorDescription: planData.sixth_floor_description || '',
+            seventhFloorDescription: planData.seventh_floor_description || '',
+            eighthFloorDescription: planData.eighth_floor_description || '',
+            ninthFloorDescription: planData.ninth_floor_description || '',
+            tenthFloorDescription: planData.tenth_floor_description || '',
             features: planData.features?.map((f: any) => f.name) || [],
             videoUrl: planData.video_url || '',
             amenties: planData.amenities?.map((a: any) => a.name) || [],
@@ -345,6 +355,43 @@ export const HouseDetails = () => {
     { label: 'Levels', value: plan.levels, icon: Layers },
     { label: 'Floor Area', value: `${plan.floorArea} m²`, icon: Ruler },
   ];
+
+   const rawDescriptionSections = [
+      { title: 'Ground Floor', text: (plan.description || '').trim() },
+      { title: '1st Floor', text: (plan.firstFloorDescription || '').trim() },
+      { title: '2nd Floor', text: (plan.secondFloorDescription || '').trim() },
+      { title: '3rd Floor', text: (plan.thirdFloorDescription || '').trim() },
+      { title: '4th Floor', text: (plan.fourthFloorDescription || '').trim() },
+      { title: '5th Floor', text: (plan.fifthFloorDescription || '').trim() },
+      { title: '6th Floor', text: (plan.sixthFloorDescription || '').trim() },
+      { title: '7th Floor', text: (plan.seventhFloorDescription || '').trim() },
+      { title: '8th Floor', text: (plan.eighthFloorDescription || '').trim() },
+      { title: '9th Floor', text: (plan.ninthFloorDescription || '').trim() },
+      { title: '10th Floor', text: (plan.tenthFloorDescription || '').trim() },
+   ];
+
+   const descriptionSections = rawDescriptionSections
+      .map((section) => ({
+         title: section.title,
+         lines: section.text
+            .split(/\r?\n/)
+            .map((line: string) => line.trim())
+            .filter((line: string) => line.length > 0),
+      }))
+      .filter((section) => section.lines.length > 0);
+
+   const totalDescriptionLines = descriptionSections.reduce((count, section) => count + section.lines.length, 0);
+   let remainingLines = showFullDescription ? Number.POSITIVE_INFINITY : 4;
+   const visibleDescriptionSections = descriptionSections
+      .map((section) => {
+         if (remainingLines <= 0) return null;
+         const lines = section.lines.slice(0, remainingLines);
+         remainingLines -= lines.length;
+         if (lines.length === 0) return null;
+         return { title: section.title, lines };
+      })
+      .filter((section): section is { title: string; lines: string[] } => section !== null);
+   const shouldShowDescriptionToggle = totalDescriptionLines > 4;
 
    const handleCheckoutPayment = async () => {
       setIsProcessingPayment(true);
@@ -577,10 +624,25 @@ export const HouseDetails = () => {
             <Card className="border-border/50 shadow-sm">
                <CardContent className="p-8">
                   <h2 className="text-2xl font-bold mb-4">About this Design</h2>
-                  <div className={`prose prose-slate dark:prose-invert max-w-none text-muted-foreground leading-relaxed ${!showFullDescription && 'line-clamp-4'}`}>
-                     {plan.description || "A masterpiece of modern architectural design, featuring open-plan living spaces designed to maximize natural light and airflow. Every detail has been carefully considered to provide both luxury and functionality for the modern family."}
-                  </div>
-                  {plan.description && plan.description.length > 200 && (
+                  {descriptionSections.length > 0 ? (
+                     <div className="space-y-5 text-muted-foreground leading-relaxed">
+                        {visibleDescriptionSections.map((section) => (
+                           <div key={section.title}>
+                              <h3 className="font-bold text-foreground mb-2">{section.title}</h3>
+                              <ul className="list-disc pl-5 space-y-1">
+                                 {section.lines.map((line: string, index: number) => (
+                                    <li key={`${section.title}-${index}-${line}`}>{line}</li>
+                                 ))}
+                              </ul>
+                           </div>
+                        ))}
+                     </div>
+                  ) : (
+                     <div className="prose prose-slate dark:prose-invert max-w-none text-muted-foreground leading-relaxed">
+                        A masterpiece of modern architectural design, featuring open-plan living spaces designed to maximize natural light and airflow. Every detail has been carefully considered to provide both luxury and functionality for the modern family.
+                     </div>
+                  )}
+                  {shouldShowDescriptionToggle && (
                      <Button 
                         variant="link" 
                         onClick={() => setShowFullDescription(!showFullDescription)}

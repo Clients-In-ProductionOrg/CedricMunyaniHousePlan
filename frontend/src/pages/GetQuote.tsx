@@ -25,10 +25,16 @@ import {
     Sparkles,
     ShieldCheck,
     Clock,
-    ArrowRight
+    ArrowRight,
+    X
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/constants';
 import house3 from '@/assets/house3.jpg';
+
+type OtherRoomItem = {
+    name: string;
+    quantity: number;
+};
 
 const GetQuote = () => {
     const [formData, setFormData] = useState({
@@ -46,6 +52,9 @@ const GetQuote = () => {
         budget: '',
         description: '',
     });
+    const [otherRoomSelection, setOtherRoomSelection] = useState('');
+    const [otherRoomQuantity, setOtherRoomQuantity] = useState('1');
+    const [otherRoomsList, setOtherRoomsList] = useState<OtherRoomItem[]>([]);
 
     const [submitted, setSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -141,6 +150,9 @@ const GetQuote = () => {
                     budget: '',
                     description: '',
                 });
+                setOtherRoomSelection('');
+                setOtherRoomQuantity('1');
+                setOtherRoomsList([]);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 window.location.assign(whatsappUrl);
             } else {
@@ -160,6 +172,58 @@ const GetQuote = () => {
         'Tuscan', 'Tuscan Roof', 'Minimalist', 'Craftsman', 'Colonial',
         'Ranch', 'Victorian', 'Not sure', 'Other',
     ];
+
+    const otherRoomOptions = [
+        'Kitchen',
+        'Lounge',
+        'Dining',
+        'Garage',
+        'Bathroom',
+        'En suite',
+        'Laundry',
+        'Scullery',
+        'Office',
+    ];
+
+    const handleAddOtherRoom = (room: string) => {
+        const normalizedRoom = room.trim();
+        if (!normalizedRoom) return;
+
+        const parsedQuantity = Number.parseInt(otherRoomQuantity, 10);
+        const quantity = Number.isNaN(parsedQuantity) || parsedQuantity < 1 ? 1 : parsedQuantity;
+
+        const updatedRooms = (() => {
+            const existing = [...otherRoomsList];
+            const existingIndex = existing.findIndex((item) => item.name === normalizedRoom);
+
+            if (existingIndex >= 0) {
+                existing[existingIndex] = {
+                    ...existing[existingIndex],
+                    quantity: existing[existingIndex].quantity + quantity,
+                };
+                return existing;
+            }
+
+            return [...existing, { name: normalizedRoom, quantity }];
+        })();
+
+        setOtherRoomsList(updatedRooms);
+        setFormData((prev) => ({
+            ...prev,
+            otherRooms: updatedRooms.map((item) => `${item.name} x${item.quantity}`).join(', '),
+        }));
+        setOtherRoomSelection('');
+        setOtherRoomQuantity('1');
+    };
+
+    const handleRemoveOtherRoom = (roomToRemove: string) => {
+        const updatedRooms = otherRoomsList.filter((item) => item.name !== roomToRemove);
+        setOtherRoomsList(updatedRooms);
+        setFormData((prev) => ({
+            ...prev,
+            otherRooms: updatedRooms.map((item) => `${item.name} x${item.quantity}`).join(', '),
+        }));
+    };
 
     const budgetOptions = [
         { value: 'under_500k', label: '500 - 1500' },
@@ -463,13 +527,57 @@ const GetQuote = () => {
                                             
                                             <div className="space-y-2">
                                                 <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Other Required Rooms</Label>
-                                                <Textarea
-                                                    name="otherRooms"
-                                                    value={formData.otherRooms}
-                                                    onChange={handleChange}
-                                                    placeholder="Home Office, Gym, Scullery..."
-                                                    className="resize-none min-h-[80px] bg-muted/50 border-transparent focus:border-primary focus:bg-background transition-all"
-                                                />
+                                                <div className="grid grid-cols-1 sm:grid-cols-[1fr_110px_auto] gap-3">
+                                                    <Select value={otherRoomSelection} onValueChange={setOtherRoomSelection}>
+                                                        <SelectTrigger className="h-12 bg-muted/50 border-transparent focus:border-primary focus:bg-background">
+                                                            <SelectValue placeholder="Select room" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {otherRoomOptions.map((room) => (
+                                                                <SelectItem key={room} value={room}>
+                                                                    {room}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+
+                                                    <Input
+                                                        type="number"
+                                                        min="1"
+                                                        value={otherRoomQuantity}
+                                                        onChange={(e) => setOtherRoomQuantity(e.target.value)}
+                                                        placeholder="Qty"
+                                                        className="h-12 bg-muted/50 border-transparent focus:border-primary focus:bg-background transition-all"
+                                                    />
+
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        className="h-12"
+                                                        onClick={() => handleAddOtherRoom(otherRoomSelection)}
+                                                        disabled={!otherRoomSelection}
+                                                    >
+                                                        Add
+                                                    </Button>
+                                                </div>
+
+                                                {otherRoomsList.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2 pt-2">
+                                                        {otherRoomsList.map((room) => (
+                                                            <Badge key={room.name} variant="secondary" className="pl-3 pr-2 py-1.5 gap-2">
+                                                                {room.name} x{room.quantity}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveOtherRoom(room.name)}
+                                                                    className="rounded-full hover:bg-black/10 p-0.5"
+                                                                    aria-label={`Remove ${room.name}`}
+                                                                >
+                                                                    <X className="w-3 h-3" />
+                                                                </button>
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </CardContent>
                                     </Card>

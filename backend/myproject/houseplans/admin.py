@@ -123,6 +123,19 @@ class HousePlanAdminForm(forms.ModelForm):
     class Meta:
         model = HousePlan
         fields = '__all__'
+        labels = {
+            'description': 'Ground Floor Description',
+            'first_floor_description': '1st Floor Description:',
+            'second_floor_description': '2nd Floor Description:',
+            'third_floor_description': '3rd Floor Description:',
+            'fourth_floor_description': '4th Floor Description:',
+            'fifth_floor_description': '5th Floor Description:',
+            'sixth_floor_description': '6th Floor Description:',
+            'seventh_floor_description': '7th Floor Description:',
+            'eighth_floor_description': '8th Floor Description:',
+            'ninth_floor_description': '9th Floor Description:',
+            'tenth_floor_description': '10th Floor Description:',
+        }
 
 
 @admin.register(HousePlan)
@@ -136,7 +149,21 @@ class HousePlanAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('title', 'description', 'price')
+            'fields': (
+                'title',
+                'description',
+                'first_floor_description',
+                'second_floor_description',
+                'third_floor_description',
+                'fourth_floor_description',
+                'fifth_floor_description',
+                'sixth_floor_description',
+                'seventh_floor_description',
+                'eighth_floor_description',
+                'ninth_floor_description',
+                'tenth_floor_description',
+                'price',
+            )
         }),
         ('Display Location', {
             'fields': ('display_location',),
@@ -164,6 +191,12 @@ class HousePlanAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    class Media:
+        css = {
+            'all': ('admin/css/houseplan-admin.css',)
+        }
+        js = ('admin/js/houseplan-admin.js',)
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

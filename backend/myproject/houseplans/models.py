@@ -49,6 +49,16 @@ class HousePlan(models.Model):
     # Basic Information
     title = models.CharField(max_length=200)
     description = models.TextField()
+    first_floor_description = models.TextField(blank=True, default='')
+    second_floor_description = models.TextField(blank=True, default='')
+    third_floor_description = models.TextField(blank=True, default='')
+    fourth_floor_description = models.TextField(blank=True, default='')
+    fifth_floor_description = models.TextField(blank=True, default='')
+    sixth_floor_description = models.TextField(blank=True, default='')
+    seventh_floor_description = models.TextField(blank=True, default='')
+    eighth_floor_description = models.TextField(blank=True, default='')
+    ninth_floor_description = models.TextField(blank=True, default='')
+    tenth_floor_description = models.TextField(blank=True, default='')
     price = models.DecimalField(max_digits=12, decimal_places=2)
     
     # Display Location

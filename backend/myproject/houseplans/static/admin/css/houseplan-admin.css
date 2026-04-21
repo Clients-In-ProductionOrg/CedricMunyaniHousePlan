@@ -1,0 +1,4 @@
+.form-row.field-first_floor_description label,
+.form-row.field-first_floor_description .flex-container > label {
+    font-weight: 700;
+}

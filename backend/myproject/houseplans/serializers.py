@@ -35,7 +35,10 @@ class HousePlanListSerializer(serializers.ModelSerializer):
     class Meta:
         model = HousePlan
         fields = [
-            'id', 'title', 'description', 'price', 'bedrooms', 'bathrooms',
+            'id', 'title', 'description', 'first_floor_description', 'second_floor_description',
+            'third_floor_description', 'fourth_floor_description', 'fifth_floor_description',
+            'sixth_floor_description', 'seventh_floor_description', 'eighth_floor_description',
+            'ninth_floor_description', 'tenth_floor_description', 'price', 'bedrooms', 'bathrooms',
             'garage', 'square_feet', 'width_meters', 'depth_meters',
             'primary_image', 'video_url', 'images', 'style', 'status', 'is_popular',
             'is_best_selling', 'is_new', 'is_pet_friendly'
@@ -51,7 +54,10 @@ class HousePlanDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = HousePlan
         fields = [
-            'id', 'title', 'description', 'price', 'bedrooms', 'bathrooms',
+            'id', 'title', 'description', 'first_floor_description', 'second_floor_description',
+            'third_floor_description', 'fourth_floor_description', 'fifth_floor_description',
+            'sixth_floor_description', 'seventh_floor_description', 'eighth_floor_description',
+            'ninth_floor_description', 'tenth_floor_description', 'price', 'bedrooms', 'bathrooms',
             'garage', 'square_feet', 'width_meters', 'depth_meters',
             'primary_image', 'video_url', 'images', 'floors', 'features', 'amenities',
             'property_type', 'land_size', 'style', 'status',
