@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Eye, EyeOff, Share2, Download, ArrowRight } from 'lucide-react';
+import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Eye, EyeOff, Share2, Download, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1514,8 +1514,9 @@ export const BuiltHomes = () => {
             {/* Built Homes Grid */}
             <div className="p-4 md:p-6 lg:p-8">
               {loading && (
-                <div className="text-center pb-6">
-                  <p className="text-muted-foreground text-base">Loading latest built homes...</p>
+                <div className="mb-4 flex items-center justify-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary shadow-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="font-medium">Loading latest built homes...</span>
                 </div>
               )}
               <>

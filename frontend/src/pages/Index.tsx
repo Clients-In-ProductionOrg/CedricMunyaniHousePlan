@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import HousePlanCard from "@/components/HousePlanCard";
@@ -191,8 +192,9 @@ const Index = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {loading && (
-                <div className="col-span-full text-center pb-4">
-                  <div className="animate-pulse text-muted-foreground">Loading latest plans...</div>
+                <div className="col-span-full flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary shadow-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="font-medium">Loading latest plans...</span>
                 </div>
               )}
               {popularPlans.length > 0 ? (
@@ -224,8 +226,9 @@ const Index = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {loading && (
-                <div className="col-span-full text-center pb-4">
-                  <div className="animate-pulse text-muted-foreground">Loading latest best-selling plans...</div>
+                <div className="col-span-full flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary shadow-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="font-medium">Loading latest best-selling plans...</span>
                 </div>
               )}
               {bestSellingPlans.length > 0 ? (

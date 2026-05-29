@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid3x3, List, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Square, ArrowRight, Share2, Download, Eye, EyeOff } from 'lucide-react';
+import { Grid3x3, List, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Square, ArrowRight, Share2, Download, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,7 +85,7 @@ function convertYoutubeUrl(url: string): string {
 }
 
 // HousePlanCard Component
-function HousePlanCard({ plan }: { plan: HousePlan }) {
+function HousePlanCard({ plan, imageLoading = false }: { plan: HousePlan; imageLoading?: boolean }) {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -343,6 +343,16 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
             alt={plan.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
           />
+
+          {imageLoading && (
+            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden bg-black/20 backdrop-blur-[1px]">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.22),transparent_36%)]" />
+              <div className="house-plan-image-wave-ring house-plan-image-wave-ring--1" />
+              <div className="house-plan-image-wave-ring house-plan-image-wave-ring--2" />
+              <div className="house-plan-image-wave-ring house-plan-image-wave-ring--3" />
+              <div className="house-plan-image-wave-core" />
+            </div>
+          )}
           
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
@@ -1790,8 +1800,10 @@ export const HousePlans = () => {
           {/* House Plans Grid */}
           <div className="p-4 md:p-6 lg:p-8">
             {loading && (
-              <div className="text-center pb-6">
-                <p className="text-muted-foreground text-base">Loading latest house plans...</p>
+              <div className="mb-4 flex items-center justify-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary shadow-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="font-medium">Loading latest house plans...</span>
+                <span className="text-primary/80">Showing fallback homes while fresh listings load.</span>
               </div>
             )}
             <div
@@ -1803,7 +1815,7 @@ export const HousePlans = () => {
             >
               {paginatedPlans.length > 0 ? (
                 paginatedPlans.map((plan) => (
-                  <HousePlanCard key={plan.id} plan={plan} />
+                  <HousePlanCard key={plan.id} plan={plan} imageLoading={loading} />
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">
