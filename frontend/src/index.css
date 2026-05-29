@@ -143,6 +143,64 @@ All colors MUST be HSL.
   }
 }
 
+@keyframes spin-wheel {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer-neon {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.house-plan-image-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background: conic-gradient(from 0deg, rgba(255,255,255,0.98), rgba(56,189,248,0.28), rgba(255,255,255,0.98));
+  animation: spin-wheel 1s linear infinite;
+  box-shadow: 0 0 18px rgba(14, 116, 144, 0.4);
+  -webkit-mask: radial-gradient(circle, transparent 58%, black 59%);
+  mask: radial-gradient(circle, transparent 58%, black 59%);
+}
+
+.house-plan-loader-title {
+  font-size: 0.625rem;
+  line-height: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: transparent;
+  background: linear-gradient(90deg, #f8fafc 0%, #67e8f9 24%, #22c55e 44%, #f8fafc 66%, #67e8f9 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer-neon 3s linear infinite;
+  text-shadow:
+    0 0 6px rgba(34, 211, 238, 0.6),
+    0 0 12px rgba(34, 197, 94, 0.35),
+    0 0 18px rgba(255,255,255,0.26);
+}
+
+.house-plan-loader-subtitle {
+  max-width: 17rem;
+  font-size: 0.55rem;
+  line-height: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.84);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+}
+
 .loading-wave-ring {
   position: absolute;
   left: 50%;

@@ -15,6 +15,7 @@ interface HousePlanCardProps {
   price: string;
   isBestseller?: boolean;
   videoUrl?: string;
+  imageLoading?: boolean;
 }
 
 
@@ -27,7 +28,8 @@ const HousePlanCard = ({
   sqft, 
   price,
   isBestseller = false,
-  videoUrl
+  videoUrl,
+  imageLoading = false
 }: HousePlanCardProps) => {
   const [showVideo, setShowVideo] = useState(false);
   const navigate = useNavigate();
@@ -45,6 +47,17 @@ const HousePlanCard = ({
             alt={title} 
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
           />
+
+          {imageLoading && (
+            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden flex items-center justify-center">
+              <div className="flex flex-col items-center gap-1.5 px-4 text-center">
+                <div className="house-plan-image-spinner" />
+                <p className="house-plan-loader-title">Loading latest house plans...</p>
+                <p className="house-plan-loader-subtitle">Displaying house plans while the latest listings are loading.</p>
+              </div>
+            </div>
+          )}
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
           <button className="absolute top-4 left-4 bg-white/20 backdrop-blur-md p-2.5 rounded-full hover:bg-white/40 transition-all border border-white/20 text-white">

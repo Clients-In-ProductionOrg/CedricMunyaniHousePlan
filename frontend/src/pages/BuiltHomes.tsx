@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Eye, EyeOff, Share2, Download, ArrowRight, Loader2 } from 'lucide-react';
+import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Eye, EyeOff, Share2, Download, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,7 +51,7 @@ const PROVINCE_OPTIONS = [
 ];
 
 // BuiltHomeCard Component
-function BuiltHomeCard({ plan }: { plan: HousePlan }) {
+function BuiltHomeCard({ plan, imageLoading = false }: { plan: HousePlan; imageLoading?: boolean }) {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -268,6 +268,16 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
             alt={plan.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
+
+          {imageLoading && (
+            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden flex items-center justify-center">
+              <div className="flex flex-col items-center gap-1.5 px-4 text-center">
+                <div className="house-plan-image-spinner" />
+                <p className="house-plan-loader-title">Loading latest house plans...</p>
+                <p className="house-plan-loader-subtitle">Displaying house plans while the latest listings are loading.</p>
+              </div>
+            </div>
+          )}
           
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
@@ -1513,12 +1523,6 @@ export const BuiltHomes = () => {
 
             {/* Built Homes Grid */}
             <div className="p-4 md:p-6 lg:p-8">
-              {loading && (
-                <div className="mb-4 flex items-center justify-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary shadow-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="font-medium">Loading latest built homes...</span>
-                </div>
-              )}
               <>
                   <div
                     className={
@@ -1529,7 +1533,7 @@ export const BuiltHomes = () => {
                   >
                     {paginatedPlans.length > 0 ? (
                       paginatedPlans.map((plan) => (
-                        <BuiltHomeCard key={plan.id} plan={plan} />
+                        <BuiltHomeCard key={plan.id} plan={plan} imageLoading={loading} />
                       ))
                     ) : (
                       <div className="col-span-full text-center py-12">

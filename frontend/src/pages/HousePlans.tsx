@@ -345,12 +345,13 @@ function HousePlanCard({ plan, imageLoading = false }: { plan: HousePlan; imageL
           />
 
           {imageLoading && (
-            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden bg-black/20 backdrop-blur-[1px]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.22),transparent_36%)]" />
-              <div className="house-plan-image-wave-ring house-plan-image-wave-ring--1" />
-              <div className="house-plan-image-wave-ring house-plan-image-wave-ring--2" />
-              <div className="house-plan-image-wave-ring house-plan-image-wave-ring--3" />
-              <div className="house-plan-image-wave-core" />
+            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="house-plan-image-spinner" />
+                <p className="house-plan-loader-text">
+                  Loading more house plans...
+                </p>
+              </div>
             </div>
           )}
           
@@ -1803,7 +1804,7 @@ export const HousePlans = () => {
               <div className="mb-4 flex items-center justify-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary shadow-sm">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="font-medium">Loading latest house plans...</span>
-                <span className="text-primary/80">Showing fallback homes while fresh listings load.</span>
+                <span className="text-primary/80">Displaying house plans while the latest listings are loading.</span>
               </div>
             )}
             <div
