@@ -100,6 +100,35 @@ export const HouseDetails = () => {
    const [isReceiptLoading, setIsReceiptLoading] = useState(false);
    const [receiptError, setReceiptError] = useState<string | null>(null);
    const hasTriggeredReceiptFlow = useRef(false);
+   const galleryHistoryStateRef = useRef(false);
+
+  const openFullscreenGallery = () => {
+    setShowImageFullscreen(true);
+    if (!galleryHistoryStateRef.current) {
+      window.history.pushState({ galleryOpen: true }, '', window.location.href);
+      galleryHistoryStateRef.current = true;
+    }
+  };
+
+  const closeFullscreenGallery = () => {
+    setShowImageFullscreen(false);
+    if (galleryHistoryStateRef.current) {
+      galleryHistoryStateRef.current = false;
+      window.history.back();
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (galleryHistoryStateRef.current) {
+        galleryHistoryStateRef.current = false;
+        setShowImageFullscreen(false);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Fetch plan from API
   useEffect(() => {
@@ -488,7 +517,7 @@ export const HouseDetails = () => {
       {/* Immersive Hero Header - Clickable for Fullscreen */}
       <div 
         className="relative h-[60vh] min-h-[500px] w-full overflow-hidden cursor-pointer group"
-        onClick={() => setShowImageFullscreen(true)}
+        onClick={openFullscreenGallery}
       >
         <div 
            className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 ease-out group-hover:scale-105"
@@ -550,7 +579,7 @@ export const HouseDetails = () => {
                  <Button 
                     size="lg"
                     variant="outline"
-                    onClick={(e) => { e.stopPropagation(); setShowImageFullscreen(true); }}
+                    onClick={(e) => { e.stopPropagation(); openFullscreenGallery(); }}
                     className="bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-full px-6 backdrop-blur-md shadow-xl"
                  >
                    <Maximize2 className="w-5 h-5 mr-2" />
@@ -821,11 +850,11 @@ export const HouseDetails = () => {
       {showImageFullscreen && (
         <div 
            className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-300"
-           onClick={() => setShowImageFullscreen(false)}
+           onClick={closeFullscreenGallery}
         >
            <div className="flex justify-between items-center p-4 text-white">
               <span className="font-medium text-lg">{plan.title} - Gallery ({currentImageIndex + 1}/{plan.images.length})</span>
-              <Button variant="ghost" size="icon" className="hover:bg-white/20 rounded-full">
+              <Button variant="ghost" size="icon" className="hover:bg-white/20 rounded-full" onClick={(e) => { e.stopPropagation(); closeFullscreenGallery(); }}>
                  <X className="w-6 h-6" />
               </Button>
            </div>
