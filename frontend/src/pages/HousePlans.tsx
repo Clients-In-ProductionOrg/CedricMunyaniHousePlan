@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Grid3x3, List, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Square, ArrowRight, Share2, Download, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -309,7 +309,7 @@ function HousePlanCard({ plan, imageLoading = false }: { plan: HousePlan; imageL
 
   const handleShareLink = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    const shareUrl = `${window.location.origin}/house-details/${plan.id}`;
+    const shareUrl = `${window.location.origin}/house-details/${plan.id}${window.location.search}`;
 
     try {
       if (navigator.share) {
@@ -494,7 +494,7 @@ function HousePlanCard({ plan, imageLoading = false }: { plan: HousePlan; imageL
             <Button 
               variant="outline"
               className="w-full rounded-xl border-primary/20 hover:bg-primary/5 hover:text-primary font-semibold" 
-              onClick={() => navigate(`/house-details/${plan.id}`)}
+              onClick={() => navigate({ pathname: `/house-details/${plan.id}`, search: window.location.search })}
             >
               Details
             </Button>
@@ -1049,7 +1049,8 @@ export const HousePlans = () => {
   const CACHE_TTL_MS = 5 * 60 * 1000;
   const [filters, setFilters] = useState<FilterState>({});
   const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = Number.parseInt(searchParams.get('page') || '1', 10) || 1;
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
@@ -1529,6 +1530,14 @@ export const HousePlans = () => {
     return filtered;
   }, [filters, sortBy, searchQuery, plans]);
 
+  const setCurrentPage = (page: number) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('page', String(Math.max(1, page)));
+      return next;
+    });
+  };
+
   useEffect(() => {
     if (!scrollPlanId || hasAutoScrolled.current) return;
     const targetIndex = filteredAndSortedPlans.findIndex(
@@ -1547,13 +1556,21 @@ export const HousePlans = () => {
         hasAutoScrolled.current = true;
       }
     });
-  }, [scrollPlanId, filteredAndSortedPlans, currentPage, itemsPerPage]);
+  }, [scrollPlanId, filteredAndSortedPlans, currentPage, itemsPerPage, setSearchParams]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedPlans.length / itemsPerPage);
+  const safeCurrentPage = Math.max(1, Math.min(currentPage, totalPages || 1));
+
+  useEffect(() => {
+    if (safeCurrentPage !== currentPage) {
+      setCurrentPage(safeCurrentPage);
+    }
+  }, [safeCurrentPage, currentPage]);
+
   const paginatedPlans = filteredAndSortedPlans.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    (safeCurrentPage - 1) * itemsPerPage,
+    safeCurrentPage * itemsPerPage
   );
   const getVisiblePaginationPages = () => {
     if (totalPages <= 5) {
@@ -1561,8 +1578,8 @@ export const HousePlans = () => {
     }
 
     const visiblePages: Array<number | 'ellipsis-left' | 'ellipsis-right'> = [1];
-    const startPage = Math.max(2, currentPage - 1);
-    const endPage = Math.min(totalPages - 1, currentPage + 1);
+    const startPage = Math.max(2, safeCurrentPage - 1);
+    const endPage = Math.min(totalPages - 1, safeCurrentPage + 1);
 
     if (startPage > 2) {
       visiblePages.push('ellipsis-left');
@@ -1832,9 +1849,9 @@ export const HousePlans = () => {
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        onClick={() => setCurrentPage(Math.max(1, safeCurrentPage - 1))}
                         className={
-                          currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'
+                          safeCurrentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'
                         }
                       />
                     </PaginationItem>
@@ -1852,7 +1869,7 @@ export const HousePlans = () => {
                         <PaginationItem key={item}>
                           <PaginationLink
                             onClick={() => setCurrentPage(item)}
-                            isActive={currentPage === item}
+                            isActive={safeCurrentPage === item}
                             className="cursor-pointer"
                           >
                             {item}
@@ -1863,9 +1880,9 @@ export const HousePlans = () => {
 
                     <PaginationItem>
                       <PaginationNext
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        onClick={() => setCurrentPage(Math.min(totalPages, safeCurrentPage + 1))}
                         className={
-                          currentPage === totalPages
+                          safeCurrentPage === totalPages
                             ? 'pointer-events-none opacity-50'
                             : 'cursor-pointer'
                         }
