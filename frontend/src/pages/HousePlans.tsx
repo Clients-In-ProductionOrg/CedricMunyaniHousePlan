@@ -50,6 +50,8 @@ const PROVINCE_OPTIONS = [
   { value: 'western_cape', label: 'Western Cape' },
 ];
 
+const LEGACY_CATALOG_CACHE_KEYS = ['house-plans-catalog-v1'];
+
 // Helper function to convert YouTube URLs to embed format
 function convertYoutubeUrl(url: string): string {
   if (!url) return '';
@@ -1032,7 +1034,7 @@ function HousePlanCard({ plan }: { plan: HousePlan }) {
 
 // Main HousePlans Page Component
 export const HousePlans = () => {
-  const CACHE_KEY = 'house-plans-catalog-v1';
+  const CACHE_KEY = 'house-plans-catalog-v2';
   const CACHE_TTL_MS = 5 * 60 * 1000;
   const [filters, setFilters] = useState<FilterState>({});
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -1282,6 +1284,10 @@ export const HousePlans = () => {
       let hasLoadedFromCache = false;
 
       try {
+        LEGACY_CATALOG_CACHE_KEYS.forEach((legacyKey) => {
+          localStorage.removeItem(legacyKey);
+        });
+
         const rawCache = localStorage.getItem(CACHE_KEY);
         if (rawCache) {
           const parsedCache = JSON.parse(rawCache);
@@ -1297,7 +1303,9 @@ export const HousePlans = () => {
       }
 
       try {
-        const response = await fetch(`${API_ENDPOINTS.PLANS}`);
+        const response = await fetch(`${API_ENDPOINTS.PLANS}?display_on=house_plans_page`, {
+          cache: 'no-store',
+        });
         const data = await response.json();
         
         if (response.ok) {

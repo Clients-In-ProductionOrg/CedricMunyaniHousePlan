@@ -74,13 +74,13 @@ def _normalize_quote_budget(budget_value):
 
 @api_view(['GET'])
 def house_plans_list(request):
-    """Get all house plans"""
-    display_location = request.query_params.get('display_on', None)
-    
-    plans = HousePlan.objects.all()
+    """Get all house plans for the house plans catalog."""
+    display_location = request.query_params.get('display_on')
+
+    plans = HousePlan.objects.filter(display_location='house_plans_page')
     if display_location:
-        plans = plans.filter(display_location=display_location)
-    
+        plans = HousePlan.objects.filter(display_location=display_location)
+
     serializer = HousePlanListSerializer(plans, many=True)
     return Response(serializer.data)
 

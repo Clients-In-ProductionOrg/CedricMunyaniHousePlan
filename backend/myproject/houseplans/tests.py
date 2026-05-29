@@ -4,9 +4,11 @@ from django.contrib.admin.sites import site
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
 from PIL import Image
+from rest_framework.test import APIRequestFactory
 
 from houseplans.admin import HousePlanAdmin, HousePlanAdminForm
 from houseplans.models import HousePlan, HousePlanImage
+from houseplans.views import house_plans_list
 
 
 class HousePlanAdminUploadTests(TestCase):
@@ -74,3 +76,65 @@ class HousePlanAdminUploadTests(TestCase):
         admin.save_model(request, house_plan, form, change=False)
 
         self.assertEqual(HousePlanImage.objects.filter(house_plan=house_plan).count(), 2)
+
+    def test_house_plans_endpoint_defaults_to_house_plans_page(self):
+        house_plan = HousePlan.objects.create(
+            title='House Catalog Plan',
+            price=1000,
+            bedrooms=2,
+            bathrooms=2,
+            garage=1,
+            display_location='house_plans_page',
+            style='Modern',
+            status='normal'
+        )
+        built_plan = HousePlan.objects.create(
+            title='Built Catalog Plan',
+            price=2000,
+            bedrooms=3,
+            bathrooms=2,
+            garage=2,
+            display_location='built_plans_page',
+            style='Modern',
+            status='normal'
+        )
+
+        factory = APIRequestFactory()
+        request = factory.get('/api/house-plans/')
+        response = house_plans_list(request)
+
+        self.assertEqual(response.status_code, 200)
+        titles = [item['title'] for item in response.data]
+        self.assertIn(house_plan.title, titles)
+        self.assertNotIn(built_plan.title, titles)
+
+    def test_house_plans_endpoint_can_filter_to_built_plans_page(self):
+        house_plan = HousePlan.objects.create(
+            title='House Catalog Plan Two',
+            price=1000,
+            bedrooms=2,
+            bathrooms=2,
+            garage=1,
+            display_location='house_plans_page',
+            style='Modern',
+            status='normal'
+        )
+        built_plan = HousePlan.objects.create(
+            title='Built Catalog Plan Two',
+            price=2000,
+            bedrooms=3,
+            bathrooms=2,
+            garage=2,
+            display_location='built_plans_page',
+            style='Modern',
+            status='normal'
+        )
+
+        factory = APIRequestFactory()
+        request = factory.get('/api/house-plans/', {'display_on': 'built_plans_page'})
+        response = house_plans_list(request)
+
+        self.assertEqual(response.status_code, 200)
+        titles = [item['title'] for item in response.data]
+        self.assertNotIn(house_plan.title, titles)
+        self.assertIn(built_plan.title, titles)

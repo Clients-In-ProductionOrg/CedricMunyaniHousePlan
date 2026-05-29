@@ -1001,8 +1001,9 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
 
 // Main BuiltHomes Page Component
 export const BuiltHomes = () => {
-  const CACHE_KEY = 'built-homes-catalog-v1';
+  const CACHE_KEY = 'built-homes-catalog-v2';
   const CACHE_TTL_MS = 5 * 60 * 1000;
+  const LEGACY_CATALOG_CACHE_KEYS = ['built-homes-catalog-v1'];
   const [filters, setFilters] = useState<FilterState>({});
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [currentPage, setCurrentPage] = useState(1);
@@ -1116,6 +1117,10 @@ export const BuiltHomes = () => {
       let hasLoadedFromCache = false;
 
       try {
+        LEGACY_CATALOG_CACHE_KEYS.forEach((legacyKey) => {
+          localStorage.removeItem(legacyKey);
+        });
+
         const rawCache = localStorage.getItem(CACHE_KEY);
         if (rawCache) {
           const parsedCache = JSON.parse(rawCache);
@@ -1131,7 +1136,9 @@ export const BuiltHomes = () => {
       }
 
       try {
-        const response = await fetch(API_ENDPOINTS.BUILT_HOMES);
+        const response = await fetch(API_ENDPOINTS.BUILT_HOMES, {
+          cache: 'no-store',
+        });
         const data = await response.json();
         
         // Handle both paginated and non-paginated responses
