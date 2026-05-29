@@ -114,9 +114,9 @@ class MultiFileInput(forms.FileInput):
 
 
 class HousePlanAdminForm(forms.ModelForm):
-    bulk_images = forms.FileField(
+    bulk_images = MultipleFileField(
         required=False,
-        widget=MultiFileInput(attrs={'multiple': True}),
+        widget=MultiFileInput(attrs={'multiple': True, 'accept': 'image/*'}),
         help_text='Select multiple images to upload at once.'
     )
 
@@ -200,7 +200,10 @@ class HousePlanAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-        bulk_files = form.files.getlist('bulk_images')
+        bulk_files = form.cleaned_data.get('bulk_images') or []
+        if not isinstance(bulk_files, (list, tuple)):
+            bulk_files = [bulk_files] if bulk_files else []
+
         if bulk_files:
             max_order = (
                 HousePlanImage.objects.filter(house_plan=obj)

@@ -41,7 +41,7 @@ class HousePlanListSerializer(serializers.ModelSerializer):
             'ninth_floor_description', 'tenth_floor_description', 'price', 'bedrooms', 'bathrooms',
             'garage', 'square_feet', 'width_meters', 'depth_meters',
             'primary_image', 'video_url', 'images', 'style', 'status', 'is_popular',
-            'is_best_selling', 'is_new', 'is_pet_friendly'
+            'is_best_selling', 'is_new', 'is_pet_friendly', 'created_at'
         ]
 
 class HousePlanDetailSerializer(serializers.ModelSerializer):

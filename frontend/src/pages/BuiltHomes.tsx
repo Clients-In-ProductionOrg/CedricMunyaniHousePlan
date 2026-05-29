@@ -1161,6 +1161,7 @@ export const BuiltHomes = () => {
             style: [plan.style] || ['Modern'],
             isNew: plan.is_new,
             isPopular: plan.is_popular,
+            createdAt: plan.created_at || null,
             images: images,
             description: plan.description,
             features: plan.features?.map((f: any) => f.name) || [],
@@ -1286,10 +1287,18 @@ export const BuiltHomes = () => {
     // Sort
     switch (sortBy) {
       case 'newest':
-        filtered.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+        filtered.sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
         break;
       case 'oldest':
-        filtered.sort((a, b) => (a.isNew ? 1 : 0) - (b.isNew ? 1 : 0));
+        filtered.sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return aTime - bTime;
+        });
         break;
       case 'price-high':
         filtered.sort((a, b) => b.price - a.price);

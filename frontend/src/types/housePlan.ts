@@ -34,6 +34,7 @@ export interface HousePlan {
   is_best_selling: boolean;
   is_new: boolean;
   is_pet_friendly: boolean;
+  createdAt?: string | null;
   status?: string;
   features?: string[];
   videoUrl?: string;
