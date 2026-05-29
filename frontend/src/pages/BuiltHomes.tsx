@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Eye, EyeOff, Share2, Download } from 'lucide-react';
+import { Grid3x3, List, CircleHelp, Heart, Home, Bed, Bath, Car, Search, X, ChevronDown, ChevronUp, SlidersHorizontal, Eye, EyeOff, Share2, Download, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { API_ENDPOINTS, BACKEND_URL } from '@/config/constants';
 import {
   Select,
@@ -537,294 +538,328 @@ function BuiltHomeCard({ plan }: { plan: HousePlan }) {
         </div>
       )}
 
-      {/* Buy Plan Modal */}
+      {/* Buy Plan Modal - Yoco Style */}
       {showBuyModal && !showPaymentModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-white">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Purchase {plan.title}</h2>
-                <button
-                  onClick={() => setShowBuyModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X className="w-6 h-6" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <Card className="w-full max-w-lg border-2 border-primary/20 shadow-2xl animate-in zoom-in-95 max-h-[85vh] flex flex-col">
+             <div className="relative shrink-0 h-32 bg-primary/10 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-blue-600/20" />
+                <div className="absolute bottom-4 left-6">
+                   <h2 className="text-2xl font-bold">Purchase {plan.title}</h2>
+                   <p className="text-sm text-muted-foreground">{plan.bedrooms} BEDROOMS</p>
+                </div>
+                <button onClick={() => setShowBuyModal(false)} className="absolute top-4 right-4 p-2 bg-background/50 hover:bg-background rounded-full transition-colors">
+                   <X className="w-4 h-4" />
                 </button>
-              </div>
+             </div>
+             <div className="p-6 space-y-6 overflow-y-auto">
+                <div className="flex justify-between items-center p-4 bg-muted/50 rounded-xl border border-border/50">
+                   <div>
+                      <p className="font-semibold">Plan Price</p>
+                   </div>
+                   <p className="text-xl font-bold text-primary">R{plan.price.toLocaleString()}</p>
+                </div>
+                
+                <div className="space-y-4">
+                   <h3 className="font-semibold border-b pb-2">Contact Information</h3>
+                   
+                   <div className="space-y-2">
+                      <Label>Your Name</Label>
+                      <Input 
+                            placeholder="Enter your full name" 
+                            value={contactInfo.name}
+                              onChange={(e) => {
+                                setContactInfo({...contactInfo, name: e.target.value});
+                                if (missingFields.name) {
+                                  setMissingFields({ ...missingFields, name: false });
+                                }
+                              }}
+                              className={missingFields.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                   </div>
 
-              <div className="space-y-4 mb-6">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Plan Price</p>
-                  <p className="text-3xl font-bold text-primary">R{plan.price.toLocaleString()}</p>
+                   <div className="space-y-2">
+                      <Label>Your Email</Label>
+                      <Input 
+                         type="email" 
+                         placeholder="Enter your email address" 
+                         value={contactInfo.email}
+                         onChange={(e) => {
+                           setContactInfo({...contactInfo, email: e.target.value});
+                           if (missingFields.email) {
+                             setMissingFields({ ...missingFields, email: false });
+                           }
+                         }}
+                         className={missingFields.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                   </div>
+
+                   <div className="space-y-2">
+                     <Label>Phone</Label>
+                     <Input 
+                       placeholder="e.g 0726659790" 
+                         value={contactInfo.phone}
+                         onChange={(e) => {
+                           const normalizedPhone = normalizePhone(e.target.value);
+                           setContactInfo({...contactInfo, phone: normalizedPhone});
+                           if (missingFields.phone) {
+                             setMissingFields({ ...missingFields, phone: false });
+                           }
+                           if (normalizedPhone.length === 0) {
+                             setPhoneValidationError(null);
+                           } else if (normalizedPhone.length !== 10) {
+                             setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+                           } else {
+                             setPhoneValidationError(null);
+                           }
+                         }}
+                         onBlur={() => {
+                           if (contactInfo.phone && contactInfo.phone.length !== 10) {
+                             setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+                           }
+                         }}
+                         className={missingFields.phone || phoneValidationError ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                      {phoneValidationError && (
+                        <p className="text-sm text-red-600">{phoneValidationError}</p>
+                      )}
+                   </div>
+
+                   <div className="space-y-2">
+                     <Label>Secret Password</Label>
+                     <p className="text-xs text-red-500 font-medium mt-1">This secret password is required to download your payment receipt. Please keep it safe.</p>
+                     <div className="relative">
+                       <Input 
+                         type={showSecretPassword ? 'text' : 'password'}
+                         placeholder="Enter secret password" 
+                         value={contactInfo.secretPassword}
+                         onChange={(e) => {
+                          const nextValue = e.target.value;
+                          const nextConfirm = contactInfo.confirmPassword;
+                          setContactInfo({...contactInfo, secretPassword: nextValue});
+                              if (missingFields.secretPassword) {
+                                setMissingFields({ ...missingFields, secretPassword: false });
+                              }
+                          if (nextConfirm) {
+                            setShowPasswordMismatch(nextValue !== nextConfirm);
+                          }
+                         }}
+                         onBlur={() => {
+                          if (contactInfo.confirmPassword) {
+                            setShowPasswordMismatch(contactInfo.secretPassword !== contactInfo.confirmPassword);
+                          }
+                         }}
+                            className={`pr-10 ${missingFields.secretPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          ref={secretPasswordInputRef}
+                       />
+                       <button
+                         type="button"
+                         onClick={() => setShowSecretPassword((prev) => !prev)}
+                         className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                         aria-label={showSecretPassword ? 'Hide password' : 'Show password'}
+                       >
+                         {showSecretPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                       </button>
+                     </div>
+                   </div>
+
+                   <div className="space-y-2">
+                     <Label>Confirm Password</Label>
+                     <div className="relative">
+                       <Input 
+                         type={showConfirmPassword ? 'text' : 'password'}
+                         placeholder="Confirm secret password" 
+                         value={contactInfo.confirmPassword}
+                         onChange={(e) => {
+                          const nextValue = e.target.value;
+                          const nextSecret = contactInfo.secretPassword;
+                          setContactInfo({...contactInfo, confirmPassword: nextValue});
+                              if (missingFields.confirmPassword) {
+                                setMissingFields({ ...missingFields, confirmPassword: false });
+                              }
+                          if (nextSecret) {
+                            setShowPasswordMismatch(nextSecret !== nextValue);
+                          }
+                         }}
+                         onBlur={() => {
+                          if (contactInfo.secretPassword) {
+                            setShowPasswordMismatch(contactInfo.secretPassword !== contactInfo.confirmPassword);
+                          }
+                         }}
+                            className={`pr-10 ${missingFields.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                       />
+                       <button
+                         type="button"
+                         onClick={() => setShowConfirmPassword((prev) => !prev)}
+                         className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                         aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                       >
+                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                       </button>
+                     </div>
+                     {showPasswordMismatch && (
+                       <p className="text-sm text-red-600">Passwords do not match.</p>
+                     )}
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                         <Label>Province</Label>
+                         <select
+                            value={contactInfo.province}
+                            onChange={(e) => {
+                              setContactInfo({ ...contactInfo, province: e.target.value });
+                              if (missingFields.province) {
+                                setMissingFields({ ...missingFields, province: false });
+                              }
+                            }}
+                            className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background ${missingFields.province ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                         >
+                           <option value="">Select province</option>
+                           {PROVINCE_OPTIONS.map((province) => (
+                             <option key={province.value} value={province.value}>
+                               {province.label}
+                             </option>
+                           ))}
+                         </select>
+                      </div>
+                      <div className="space-y-2">
+                         <Label>City</Label>
+                         <Input 
+                            placeholder="e.g. Johannesburg" 
+                            value={contactInfo.city}
+                           onChange={(e) => {
+                            setContactInfo({...contactInfo, city: e.target.value});
+                            if (missingFields.city) {
+                              setMissingFields({ ...missingFields, city: false });
+                            }
+                           }}
+                           className={missingFields.city ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                         />
+                      </div>
+                   </div>
+                   
+                   <div className="space-y-2">
+                      <Label>Pick-up Point</Label>
+                       <Input 
+                         placeholder="e.g. PostNet or Pep Store" 
+                         value={contactInfo.pickupPoint}
+                         onChange={(e) => {
+                           setContactInfo({...contactInfo, pickupPoint: e.target.value});
+                           if (missingFields.pickupPoint) {
+                             setMissingFields({ ...missingFields, pickupPoint: false });
+                           }
+                         }}
+                         className={missingFields.pickupPoint ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                   </div>
+
+                   <div className="space-y-2">
+                      <Label>Area / Mall</Label>
+                       <Input 
+                         placeholder="e.g. Sandton City" 
+                         value={contactInfo.areaMall}
+                         onChange={(e) => {
+                           setContactInfo({...contactInfo, areaMall: e.target.value});
+                           if (missingFields.areaMall) {
+                             setMissingFields({ ...missingFields, areaMall: false });
+                           }
+                         }}
+                         className={missingFields.areaMall ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                   </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <p className="text-sm text-muted-foreground mb-2">Contact Information</p>
-                  <input
-                    type="text"
-                    placeholder="Your Name"
-                    value={contactInfo.name}
-                    onChange={(e) => {
-                      setContactInfo({ ...contactInfo, name: e.target.value });
-                      if (missingFields.name) {
-                        setMissingFields({ ...missingFields, name: false });
-                      }
-                    }}
-                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.name ? 'border-red-500' : ''}`}
-                  />
-                  <input
-                    type="email"
-                    placeholder="Your Email"
-                    value={contactInfo.email}
-                    onChange={(e) => {
-                      setContactInfo({ ...contactInfo, email: e.target.value });
-                      if (missingFields.email) {
-                        setMissingFields({ ...missingFields, email: false });
-                      }
-                    }}
-                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.email ? 'border-red-500' : ''}`}
-                  />
-                  <input
-                    type="tel"
-                    placeholder="e.g 0726659790"
-                    value={contactInfo.phone}
-                    onChange={(e) => {
-                      const normalizedPhone = normalizePhone(e.target.value);
-                      setContactInfo({ ...contactInfo, phone: normalizedPhone });
-                      if (missingFields.phone) {
-                        setMissingFields({ ...missingFields, phone: false });
-                      }
-                      if (normalizedPhone.length === 0) {
-                        setPhoneValidationError(null);
-                      } else if (normalizedPhone.length !== 10) {
-                        setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
-                      } else {
-                        setPhoneValidationError(null);
-                      }
-                    }}
-                    onBlur={() => {
-                      if (contactInfo.phone && contactInfo.phone.length !== 10) {
-                        setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
-                      }
-                    }}
-                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.phone || phoneValidationError ? 'border-red-500' : ''}`}
-                  />
-                  {phoneValidationError && (
-                    <p className="text-sm text-red-600 mb-2">{phoneValidationError}</p>
-                  )}
-                  <p className="text-xs text-red-500 font-medium mb-1">This secret password is required to download your payment receipt. Please keep it safe.</p>
-                  <div className="relative">
-                    <input
-                      type={showSecretPassword ? 'text' : 'password'}
-                      placeholder="Secret Password"
-                      value={contactInfo.secretPassword}
-                      onChange={(e) => {
-                        const nextValue = e.target.value;
-                        const nextConfirm = contactInfo.confirmPassword;
-                        setContactInfo({ ...contactInfo, secretPassword: nextValue });
-                        if (missingFields.secretPassword) {
-                          setMissingFields({ ...missingFields, secretPassword: false });
-                        }
-                        if (nextConfirm) {
-                          setShowPasswordMismatch(nextValue !== nextConfirm);
-                        }
-                      }}
-                      onBlur={() => {
-                        if (contactInfo.confirmPassword) {
-                          setShowPasswordMismatch(contactInfo.secretPassword !== contactInfo.confirmPassword);
-                        }
-                      }}
-                      className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm pr-10 ${missingFields.secretPassword ? 'border-red-500' : ''}`}
-                      ref={secretPasswordInputRef}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowSecretPassword((prev) => !prev)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      aria-label={showSecretPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showSecretPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      placeholder="Confirm Password"
-                      value={contactInfo.confirmPassword}
-                      onChange={(e) => {
-                        const nextValue = e.target.value;
-                        const nextSecret = contactInfo.secretPassword;
-                        setContactInfo({ ...contactInfo, confirmPassword: nextValue });
-                        if (missingFields.confirmPassword) {
-                          setMissingFields({ ...missingFields, confirmPassword: false });
-                        }
-                        if (nextSecret) {
-                          setShowPasswordMismatch(nextSecret !== nextValue);
-                        }
-                      }}
-                      onBlur={() => {
-                        if (contactInfo.secretPassword) {
-                          setShowPasswordMismatch(contactInfo.secretPassword !== contactInfo.confirmPassword);
-                        }
-                      }}
-                      className={`w-full px-3 py-2 border rounded-lg mb-1 text-sm pr-10 ${missingFields.confirmPassword ? 'border-red-500' : ''}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword((prev) => !prev)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {showPasswordMismatch && (
-                    <p className="text-xs text-red-600 mb-2">Passwords do not match.</p>
-                  )}
-                  <select
-                    value={contactInfo.province}
-                    onChange={(e) => {
-                      setContactInfo({ ...contactInfo, province: e.target.value });
-                      if (missingFields.province) {
-                        setMissingFields({ ...missingFields, province: false });
-                      }
-                    }}
-                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm bg-white ${missingFields.province ? 'border-red-500' : ''}`}
-                  >
-                    <option value="">Select Province</option>
-                    {PROVINCE_OPTIONS.map((province) => (
-                      <option key={province.value} value={province.value}>
-                        {province.label}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    placeholder="City"
-                    value={contactInfo.city}
-                    onChange={(e) => {
-                      setContactInfo({ ...contactInfo, city: e.target.value });
-                      if (missingFields.city) {
-                        setMissingFields({ ...missingFields, city: false });
-                      }
-                    }}
-                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.city ? 'border-red-500' : ''}`}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Pick-up Point"
-                    value={contactInfo.pickupPoint}
-                    onChange={(e) => {
-                      setContactInfo({ ...contactInfo, pickupPoint: e.target.value });
-                      if (missingFields.pickupPoint) {
-                        setMissingFields({ ...missingFields, pickupPoint: false });
-                      }
-                    }}
-                    className={`w-full px-3 py-2 border rounded-lg mb-3 text-sm ${missingFields.pickupPoint ? 'border-red-500' : ''}`}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Area / Mall"
-                    value={contactInfo.areaMall}
-                    onChange={(e) => {
-                      setContactInfo({ ...contactInfo, areaMall: e.target.value });
-                      if (missingFields.areaMall) {
-                        setMissingFields({ ...missingFields, areaMall: false });
-                      }
-                    }}
-                    className={`w-full px-3 py-2 border rounded-lg text-sm ${missingFields.areaMall ? 'border-red-500' : ''}`}
-                  />
-                  {Object.values(missingFields).some(Boolean) && (
-                    <p className="text-xs text-red-600 mt-2">Please fill in all required fields.</p>
-                  )}
-                  {purchaseError && (
-                    <p className="text-xs text-red-600 mt-2">{purchaseError}</p>
-                  )}
-                </div>
-              </div>
+                 {Object.values(missingFields).some(Boolean) && (
+                   <p className="text-sm text-red-600">Please fill in all required fields.</p>
+                 )}
+                 {purchaseError && (
+                   <p className="text-sm text-red-600">{purchaseError}</p>
+                 )}
 
-              <div className="space-y-3">
-                <Button 
-                  className="w-full" 
-                  size="lg"
-                  onClick={async () => {
-                    // Save purchase to database
-                    try {
+                <div className="flex gap-3 pt-2">
+                   <Button 
+                    size="lg"
+                    className="flex-1 text-base font-semibold" 
+                    onClick={async () => {
                       setPurchaseError(null);
-                      const nextMissing: Record<string, boolean> = {};
-                      if (!contactInfo.name) nextMissing.name = true;
-                      if (!contactInfo.email) nextMissing.email = true;
-                      if (!contactInfo.phone) nextMissing.phone = true;
-                      if (!contactInfo.secretPassword) nextMissing.secretPassword = true;
-                      if (!contactInfo.confirmPassword) nextMissing.confirmPassword = true;
-                      if (!contactInfo.province) nextMissing.province = true;
-                      if (!contactInfo.city) nextMissing.city = true;
-                      if (!contactInfo.pickupPoint) nextMissing.pickupPoint = true;
-                      if (!contactInfo.areaMall) nextMissing.areaMall = true;
-                      setMissingFields(nextMissing);
-                      if (Object.keys(nextMissing).length > 0) {
-                        return;
-                      }
-                      if (contactInfo.phone.length !== 10) {
-                        setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
-                        return;
-                      }
-                      if (contactInfo.secretPassword !== contactInfo.confirmPassword) {
-                        setShowPasswordMismatch(true);
-                        alert('Passwords do not match');
-                        return;
-                      }
-                      const response = await fetch(API_ENDPOINTS.PURCHASES, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          house_plan_id: plan.id,
-                          full_name: contactInfo.name,
-                          email: contactInfo.email,
-                          phone_number: contactInfo.phone,
-                          province: contactInfo.province,
-                          city: contactInfo.city,
-                          pick_up_point: contactInfo.pickupPoint,
-                          area_mall: contactInfo.areaMall,
-                          secret_password: contactInfo.secretPassword,
-                        })
-                      });
-                      
-                      const data = await response.json();
-                      if (data.success) {
-                        const purchaseIdentifier = data.public_id || data.id;
-                        setPurchaseId(purchaseIdentifier);
-                        console.log('Purchase saved:', purchaseIdentifier);
-                        setShowBuyModal(false);
-                        // Trigger Yoco payment directly with v2 API
-                        await handleCheckoutPayment(plan, purchaseIdentifier);
-                      } else {
-                        const errorMessage = data.error || data.detail || 'Error saving purchase. Please try again.';
-                        setPurchaseError(errorMessage);
-                        setPurchaseErrorModalMessage(errorMessage);
-                        setShowPurchaseErrorModal(true);
-                      }
-                    } catch (error) {
-                      console.error('Error:', error);
-                      setPurchaseError('Error saving purchase. Please try again.');
-                      setPurchaseErrorModalMessage('Error saving purchase. Please try again.');
-                      setShowPurchaseErrorModal(true);
-                    }
-                  }}
-                >
-                  Proceed to Payment
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setShowBuyModal(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
+                      setShowPurchaseErrorModal(false);
+                        const nextMissing: Record<string, boolean> = {};
+                        if (!contactInfo.name) nextMissing.name = true;
+                        if (!contactInfo.email) nextMissing.email = true;
+                        if (!contactInfo.phone) nextMissing.phone = true;
+                        if (!contactInfo.secretPassword) nextMissing.secretPassword = true;
+                        if (!contactInfo.confirmPassword) nextMissing.confirmPassword = true;
+                        if (!contactInfo.province) nextMissing.province = true;
+                        if (!contactInfo.city) nextMissing.city = true;
+                        if (!contactInfo.pickupPoint) nextMissing.pickupPoint = true;
+                        if (!contactInfo.areaMall) nextMissing.areaMall = true;
+                        setMissingFields(nextMissing);
+                        if (Object.keys(nextMissing).length > 0) {
+                          return;
+                        }
+                        if (contactInfo.phone.length !== 10) {
+                          setPhoneValidationError('Phone number must be exactly 10 digits. Please check for missing or extra digits.');
+                          return;
+                        }
+                        if (contactInfo.secretPassword !== contactInfo.confirmPassword) {
+                          setShowPasswordMismatch(true);
+                          alert('Passwords do not match');
+                          return;
+                        }
+
+                        try {
+                          const response = await fetch(API_ENDPOINTS.PURCHASES, {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              house_plan_id: plan.id,
+                              full_name: contactInfo.name,
+                              email: contactInfo.email,
+                              phone_number: contactInfo.phone,
+                              province: contactInfo.province,
+                              city: contactInfo.city,
+                              pick_up_point: contactInfo.pickupPoint,
+                              area_mall: contactInfo.areaMall,
+                              secret_password: contactInfo.secretPassword,
+                            })
+                          });
+
+                          const data = await response.json();
+                          if (data.success) {
+                            const purchaseIdentifier = data.public_id || data.id;
+                            setPurchaseId(purchaseIdentifier);
+                            setShowBuyModal(false);
+                            await handleCheckoutPayment(plan, purchaseIdentifier);
+                          } else {
+                            const errorMessage = data.error || data.detail || 'Error saving purchase. Please try again.';
+                            setPurchaseError(errorMessage);
+                            setPurchaseErrorModalMessage(errorMessage);
+                            setShowPurchaseErrorModal(true);
+                          }
+                        } catch (error) {
+                          console.error('Error:', error);
+                          const errorMessage = 'Error saving purchase. Please try again.';
+                          setPurchaseError(errorMessage);
+                          setPurchaseErrorModalMessage(errorMessage);
+                          setShowPurchaseErrorModal(true);
+                        }
+                    }}
+                   >
+                      Proceed to Payment <ArrowRight className="ml-2 w-4 h-4" />
+                   </Button>
+                   <Button 
+                    variant="outline"
+                    size="lg"
+                    className="flex-1 text-base"
+                    onClick={() => setShowBuyModal(false)}
+                   >
+                      Cancel
+                   </Button>
+                </div>
+             </div>
           </Card>
         </div>
       )}
@@ -1347,7 +1382,7 @@ export const BuiltHomes = () => {
 
   return (
     <>
-      <Header hideNavLinks />
+      <Header />
       {showReceiptBanner && receiptPurchaseId && (
         <div className="bg-emerald-50 border-b border-emerald-200 text-emerald-900">
           <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
