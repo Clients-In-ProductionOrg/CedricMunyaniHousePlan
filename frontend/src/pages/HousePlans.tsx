@@ -472,11 +472,13 @@ function HousePlanCard({ plan, imageLoading = false }: { plan: HousePlan; imageL
                 <span className="text-xs font-semibold text-foreground">{plan.bathrooms}</span>
                 <span className="text-[10px] text-muted-foreground">Baths</span>
              </div>
-             <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-secondary/30 text-center hover:bg-secondary/50 transition-colors">
+             {plan.garage > 0 && (
+              <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-secondary/30 text-center hover:bg-secondary/50 transition-colors">
                 <Car className="w-4 h-4 text-primary" />
                 <span className="text-xs font-semibold text-foreground">{plan.garage}</span>
                 <span className="text-[10px] text-muted-foreground">Garage</span>
-             </div>
+              </div>
+             )}
           </div>
           
           <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
@@ -1340,7 +1342,7 @@ export const HousePlans = () => {
               price: Math.round(plan.price),
               bedrooms: plan.bedrooms,
               bathrooms: Math.round(plan.bathrooms),
-              garage: plan.garage || 2,
+              garage: plan.garage ?? 2,
               floorArea: plan.square_feet,
               levels: plan.floors?.length || 2,
               width: plan.width_meters || 30,
@@ -1356,7 +1358,7 @@ export const HousePlans = () => {
               enSuite: 1,
               lounges: plan.floors?.reduce((sum: number, f: any) => sum + (f.lounges || 0), 0) || 1,
               diningAreas: plan.floors?.reduce((sum: number, f: any) => sum + (f.dining_areas || 0), 0) || 1,
-              garageParking: plan.garage || 1,
+              garageParking: plan.garage ?? 1,
               coveredParking: 2,
               petFriendly: plan.is_pet_friendly || false,
               amenities: plan.amenities?.map((a: any) => a.name) || [],

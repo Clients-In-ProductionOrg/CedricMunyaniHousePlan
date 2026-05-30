@@ -159,7 +159,7 @@ export const HouseDetails = () => {
             price: Math.round(planData.price),
             bedrooms: planData.bedrooms,
             bathrooms: Math.round(planData.bathrooms),
-            garage: planData.garage || 2,
+            garage: planData.garage ?? 2,
             floorArea: planData.square_feet,
             levels: planData.floors?.length || 2,
             width: planData.width_meters || 30,
@@ -377,13 +377,13 @@ export const HouseDetails = () => {
       });
    };
 
-  const propertyFeatures = [
-    { label: 'Bedrooms', value: plan.bedrooms, icon: BedDouble },
-    { label: 'Bathrooms', value: plan.bathrooms, icon: Bath },
-    { label: 'Garage', value: plan.garage, icon: Warehouse },
-    { label: 'Levels', value: plan.levels, icon: Layers },
-    { label: 'Floor Area', value: `${plan.floorArea} m²`, icon: Ruler },
-  ];
+   const propertyFeatures = [
+      { label: 'Bedrooms', value: plan.bedrooms, icon: BedDouble },
+      { label: 'Bathrooms', value: plan.bathrooms, icon: Bath },
+      ...(plan.garage > 0 ? [{ label: 'Garage', value: plan.garage, icon: Warehouse }] : []),
+      { label: 'Levels', value: plan.levels, icon: Layers },
+      { label: 'Floor Area', value: `${plan.floorArea} m²`, icon: Ruler },
+   ];
 
    const rawDescriptionSections = [
       { title: 'Ground Floor', text: (plan.description || '').trim() },
