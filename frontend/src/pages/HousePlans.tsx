@@ -90,6 +90,7 @@ function HousePlanCard({ plan, imageLoading = false }: { plan: HousePlan; imageL
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const lastGalleryToggleRef = useRef<number>(0);
   const [showVideo, setShowVideo] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -199,10 +200,9 @@ function HousePlanCard({ plan, imageLoading = false }: { plan: HousePlan; imageL
   };
 
   const handleOpenGallery = () => {
-    console.log(`Opening gallery for ${plan.title}`, {
-      totalImages: plan.images.length,
-      images: plan.images
-    });
+    const now = Date.now();
+    if (now - lastGalleryToggleRef.current < 300) return;
+    lastGalleryToggleRef.current = now;
     setIsGalleryOpen(true);
   };
 
@@ -412,7 +412,7 @@ function HousePlanCard({ plan, imageLoading = false }: { plan: HousePlan; imageL
           images={plan.images}
           initialIndex={currentImageIndex}
           isOpen={isGalleryOpen}
-          onClose={() => setIsGalleryOpen(false)}
+          onClose={() => { lastGalleryToggleRef.current = Date.now(); setIsGalleryOpen(false); }}
           title={plan.title}
         />
 
@@ -1308,8 +1308,8 @@ export const HousePlans = () => {
           const isFresh = Date.now() - (parsedCache?.timestamp || 0) < CACHE_TTL_MS;
           if (isFresh && Array.isArray(parsedCache?.plans)) {
             setPlans(parsedCache.plans);
-            setLoading(false);
             hasLoadedFromCache = true;
+            // Keep loading state true until real database data is fetched
           }
         }
       } catch {
@@ -1391,9 +1391,8 @@ export const HousePlans = () => {
           setPlans(housePlans);
         }
       } finally {
-        if (!hasLoadedFromCache) {
-          setLoading(false);
-        }
+        // Stop loading after API attempt completes (success or failure)
+        setLoading(false);
       }
     };
 

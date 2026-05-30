@@ -62,8 +62,8 @@ const Index = () => {
             setPopularPlans(parsedCache.popularPlans);
             setBestSellingPlans(parsedCache.bestSellingPlans);
             setHomeVideoUrl(parsedCache.homeVideoUrl || "");
-            setLoading(false);
             hasLoadedFromCache = true;
+            // Keep loading state true until real database data is fetched
           }
         }
       } catch {

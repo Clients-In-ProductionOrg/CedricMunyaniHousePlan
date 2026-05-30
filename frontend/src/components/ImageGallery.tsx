@@ -19,8 +19,7 @@ export function ImageGallery({
   title,
 }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-
-  console.log('ImageGallery Props:', { isOpen, imagesCount: images.length, title });
+  // Avoid console logging here to prevent noisy re-renders
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -36,12 +35,7 @@ export function ImageGallery({
     if (e.key === 'Escape') onClose();
   };
 
-  if (!isOpen) {
-    console.log('Gallery not open, returning null');
-    return null;
-  }
-
-  console.log('Gallery rendering - isOpen:', isOpen, 'currentIndex:', currentIndex, 'images:', images);
+  if (!isOpen) return null;
 
   return (
     <div 
