@@ -5,6 +5,7 @@ urlpatterns = [
     # House Plans API
     path('api/house-plans/', views.house_plans_list, name='house_plans_list'),
     path('api/house-plans/<int:pk>/', views.house_plan_detail, name='house_plan_detail'),
+    path('api/house-plans/<int:pk>/download-images/', views.download_house_plan_images, name='download_house_plan_images'),
     path('api/built-homes/', views.built_homes, name='built_homes'),
     
     # Contact APIs

@@ -22,6 +22,10 @@ export const API_ENDPOINTS = {
     return template.replace(':id', String(id));
   },
   BUILT_HOMES: import.meta.env.VITE_API_BUILT_HOMES || `${BACKEND_BASE}/api/built-homes/`,
+  DOWNLOAD_IMAGES: (id: string | number) => {
+    const template = import.meta.env.VITE_API_DOWNLOAD_IMAGES || `${BACKEND_BASE}/api/house-plans/:id/download-images/`;
+    return template.replace(':id', String(id));
+  },
   SITE_SETTINGS: import.meta.env.VITE_API_SITE_SETTINGS || `${BACKEND_BASE}/api/site-settings/`,
   SETTINGS: import.meta.env.VITE_API_SETTINGS || `${BACKEND_BASE}/api/settings/`,
   CONTACTS: import.meta.env.VITE_API_CONTACTS || `${BACKEND_BASE}/api/contact-message/`,

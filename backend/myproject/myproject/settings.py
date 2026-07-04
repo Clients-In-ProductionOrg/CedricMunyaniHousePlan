@@ -142,6 +142,17 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Upload handling for large admin image batches
+DATA_UPLOAD_MAX_MEMORY_SIZE = config('DATA_UPLOAD_MAX_MEMORY_SIZE', default=262144000, cast=int)  # 250MB request body
+FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE', default=5242880, cast=int)    # 5MB in memory, then temp file
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+MAX_ADMIN_IMAGE_FILE_SIZE = config('MAX_ADMIN_IMAGE_FILE_SIZE', default=52428800, cast=int)       # 50MB per image
+MAX_BULK_IMAGES_TOTAL_SIZE = config('MAX_BULK_IMAGES_TOTAL_SIZE', default=314572800, cast=int)    # 300MB per submit
+MAX_BULK_IMAGES_COUNT = config('MAX_BULK_IMAGES_COUNT', default=120, cast=int)
+
 # AWS S3 Configuration
 USE_S3 = config('USE_S3', default=False, cast=bool)
 
@@ -162,7 +173,7 @@ if USE_S3:
     
     # S3 additional settings for optimization
     AWS_S3_SIGNATURE_VERSION = 's3v4'
-    AWS_S3_MAX_MEMORY_SIZE = 52428800  # 50MB
+    AWS_S3_MAX_MEMORY_SIZE = config('AWS_S3_MAX_MEMORY_SIZE', default=5242880, cast=int)  # 5MB then temp file
     AWS_QUERYSTRING_AUTH = False  # Allow public access to media files
     # NOTE: AWS_DEFAULT_ACL removed - bucket has block public ACL enabled
     

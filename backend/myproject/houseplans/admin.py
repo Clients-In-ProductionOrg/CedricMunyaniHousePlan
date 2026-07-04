@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django import forms
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.urls import path
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
@@ -46,6 +48,21 @@ class HousePlanImageInlineForm(forms.ModelForm):
     class Meta:
         model = HousePlanImage
         fields = ('image', 'title', 'order')
+
+    def clean_image(self):
+        images = self.cleaned_data.get('image') or []
+        if not isinstance(images, (list, tuple)):
+            images = [images] if images else []
+
+        max_file_size = getattr(settings, 'MAX_ADMIN_IMAGE_FILE_SIZE', 52428800)
+        for uploaded in images:
+            if uploaded.size > max_file_size:
+                raise ValidationError(
+                    f'"{uploaded.name}" is too large ({uploaded.size / 1024 / 1024:.1f}MB). '
+                    f'Max allowed is {max_file_size / 1024 / 1024:.0f}MB per file.'
+                )
+
+        return images
 
 
 class HousePlanImageInlineFormSet(BaseInlineFormSet):
@@ -136,6 +153,42 @@ class HousePlanAdminForm(forms.ModelForm):
             'ninth_floor_description': '9th Floor Description:',
             'tenth_floor_description': '10th Floor Description:',
         }
+
+    def clean_bulk_images(self):
+        files = self.cleaned_data.get('bulk_images') or []
+        if not isinstance(files, (list, tuple)):
+            files = [files] if files else []
+
+        if not files:
+            return files
+
+        max_count = getattr(settings, 'MAX_BULK_IMAGES_COUNT', 120)
+        max_total_size = getattr(settings, 'MAX_BULK_IMAGES_TOTAL_SIZE', 314572800)
+        max_file_size = getattr(settings, 'MAX_ADMIN_IMAGE_FILE_SIZE', 52428800)
+
+        if len(files) > max_count:
+            raise ValidationError(
+                f'You selected {len(files)} images. Maximum allowed per upload is {max_count}. '
+                'Please split into smaller batches.'
+            )
+
+        total_size = sum(uploaded.size for uploaded in files)
+        if total_size > max_total_size:
+            raise ValidationError(
+                f'Total upload size is {total_size / 1024 / 1024:.1f}MB. '
+                f'Max allowed per upload is {max_total_size / 1024 / 1024:.0f}MB. '
+                'Please split into smaller batches.'
+            )
+
+        oversized = [u for u in files if u.size > max_file_size]
+        if oversized:
+            first = oversized[0]
+            raise ValidationError(
+                f'"{first.name}" is {first.size / 1024 / 1024:.1f}MB. '
+                f'Max allowed is {max_file_size / 1024 / 1024:.0f}MB per file.'
+            )
+
+        return files
 
 
 @admin.register(HousePlan)

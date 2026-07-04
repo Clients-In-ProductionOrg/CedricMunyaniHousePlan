@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -13,6 +13,8 @@ import hmac
 import logging
 import time
 import io
+import re
+import zipfile
 from reportlab.lib.pagesizes import LETTER
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -93,6 +95,38 @@ def house_plan_detail(request, pk):
         return Response(serializer.data)
     except HousePlan.DoesNotExist:
         return Response({'error': 'House plan not found'}, status=status.HTTP_404_NOT_FOUND)
+
+def download_house_plan_images(request, pk):
+    """Download all images for a house plan as a zip file."""
+    try:
+        house_plan = HousePlan.objects.get(pk=pk)
+    except HousePlan.DoesNotExist:
+        return JsonResponse({'error': 'House plan not found'}, status=404)
+
+    images = house_plan.images.all()
+    if not images:
+        return JsonResponse({'error': 'No images found for this house plan.'}, status=404)
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for index, house_image in enumerate(images, start=1):
+            try:
+                house_image.image.open('rb')
+                image_data = house_image.image.read()
+            finally:
+                house_image.image.close()
+
+            extension = os.path.splitext(house_image.image.name)[1] or '.jpg'
+            name = house_image.title.strip() if house_image.title else f'image-{index}'
+            safe_name = re.sub(r'[^a-zA-Z0-9_-]+', '_', name)
+            file_name = f'{safe_name}{extension}'
+            zip_file.writestr(file_name, image_data)
+
+    buffer.seek(0)
+    response = HttpResponse(buffer.getvalue(), content_type='application/zip')
+    archive_name = re.sub(r'[^a-zA-Z0-9_-]+', '_', house_plan.title.strip().lower()) or 'house-plan'
+    response['Content-Disposition'] = f'attachment; filename="{archive_name}-images.zip"'
+    return response
 
 @api_view(['GET'])
 def built_homes(request):

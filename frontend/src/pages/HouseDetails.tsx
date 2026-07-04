@@ -18,7 +18,8 @@ import {
   MapPin,
    ArrowRight,
    Eye,
-   EyeOff
+   EyeOff,
+   Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -98,6 +99,7 @@ export const HouseDetails = () => {
    const [receiptPurchaseId, setReceiptPurchaseId] = useState<string | null>(null);
    const [showReceiptBanner, setShowReceiptBanner] = useState(false);
    const [isReceiptLoading, setIsReceiptLoading] = useState(false);
+   const [isDownloadingImages, setIsDownloadingImages] = useState(false);
    const [receiptError, setReceiptError] = useState<string | null>(null);
    const hasTriggeredReceiptFlow = useRef(false);
    const galleryHistoryStateRef = useRef(false);
@@ -115,6 +117,71 @@ export const HouseDetails = () => {
     if (galleryHistoryStateRef.current) {
       galleryHistoryStateRef.current = false;
       window.history.back();
+    }
+  };
+
+  const downloadImagesDirectly = async () => {
+    if (!plan?.images?.length) return;
+
+    try {
+      for (let index = 0; index < plan.images.length; index += 1) {
+        const imageUrl = plan.images[index];
+        const fileExtensionMatch = imageUrl.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
+        const extension = fileExtensionMatch?.[1]?.split('?')[0] || 'jpg';
+        const fileName = `${plan.title.replace(/\s+/g, '-').toLowerCase()}-${index + 1}.${extension}`;
+
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+          console.error('Failed to download image:', imageUrl, response.status, response.statusText);
+          continue;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+
+        await new Promise((resolve) => setTimeout(resolve, 120));
+      }
+    } catch (error) {
+      console.error('Direct image download error:', error);
+    }
+  };
+
+  const handleDownloadAllImages = async () => {
+    if (!plan?.images?.length) return;
+    setIsDownloadingImages(true);
+
+    try {
+      const response = await fetch(API_ENDPOINTS.DOWNLOAD_IMAGES(plan.id), {
+        method: 'GET'
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${plan.title.replace(/\s+/g, '-').toLowerCase()}-images.zip`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      console.warn('Backend ZIP failed, falling back to direct image download.', response.status, response.statusText);
+      await downloadImagesDirectly();
+    } catch (error) {
+      console.error('Download all images error:', error);
+      await downloadImagesDirectly();
+    } finally {
+      setIsDownloadingImages(false);
     }
   };
 
@@ -565,7 +632,7 @@ export const HouseDetails = () => {
                 </div>
               </div>
 
-               <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
                  {plan.videoUrl && (
                     <Button 
                       size="lg"
@@ -585,6 +652,15 @@ export const HouseDetails = () => {
                    <Maximize2 className="w-5 h-5 mr-2" />
                    View Photos
                  </Button>
+                 <Button
+                    size="lg"
+                    onClick={(e) => { e.stopPropagation(); handleDownloadAllImages(); }}
+                    disabled={isDownloadingImages}
+                    className="bg-primary text-white border-transparent rounded-full px-6 backdrop-blur-md shadow-xl hover:bg-primary/90"
+                 >
+                    <Download className="w-5 h-5 mr-2" />
+                    {isDownloadingImages ? 'Downloading...' : 'Download All'}
+                 </Button>
                </div>
             </div>
           </div>
@@ -600,6 +676,18 @@ export const HouseDetails = () => {
             {/* Gallery Strip */}
             <Card className="border-none shadow-2xl bg-card/80 backdrop-blur-sm overflow-hidden">
                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                     <h2 className="text-lg font-semibold text-foreground">Photo Gallery</h2>
+                     <Button
+                        size="sm"
+                        onClick={handleDownloadAllImages}
+                        disabled={isDownloadingImages}
+                        className="gap-2 bg-primary text-white border-transparent hover:bg-primary/90"
+                     >
+                        <Download className="w-4 h-4" />
+                        {isDownloadingImages ? 'Downloading...' : 'Download All'}
+                     </Button>
+                  </div>
                   <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
                      {plan.images.map((image: string, index: number) => (
                         <div 
