@@ -23,7 +23,7 @@ class MultiFileInput(forms.FileInput):
 class MultipleFileField(forms.FileField):
     def to_python(self, data):
         if not data:
-            return []
+            return None
         if isinstance(data, (list, tuple)):
             return data
         return [data]
@@ -50,9 +50,19 @@ class HousePlanImageInlineForm(forms.ModelForm):
         fields = ('image', 'title', 'order')
 
     def clean_image(self):
-        images = self.cleaned_data.get('image') or []
-        if not isinstance(images, (list, tuple)):
-            images = [images] if images else []
+        image_value = self.cleaned_data.get('image')
+        if not image_value:
+            # For existing inline rows, keep current file when no new upload is provided.
+            if self.instance and self.instance.pk:
+                return self.instance.image
+            return None
+
+        images = image_value if isinstance(image_value, (list, tuple)) else [image_value]
+        images = [uploaded for uploaded in images if uploaded]
+        if not images:
+            if self.instance and self.instance.pk:
+                return self.instance.image
+            return None
 
         max_file_size = getattr(settings, 'MAX_ADMIN_IMAGE_FILE_SIZE', 52428800)
         for uploaded in images:
@@ -61,6 +71,10 @@ class HousePlanImageInlineForm(forms.ModelForm):
                     f'"{uploaded.name}" is too large ({uploaded.size / 1024 / 1024:.1f}MB). '
                     f'Max allowed is {max_file_size / 1024 / 1024:.0f}MB per file.'
                 )
+
+        # Existing inline objects can only store one file in ImageField.
+        if self.instance and self.instance.pk:
+            return images[0]
 
         return images
 
@@ -197,7 +211,7 @@ class HousePlanAdmin(admin.ModelAdmin):
     list_display = ('title', 'bedrooms', 'bathrooms', 'price', 'is_popular', 'is_best_selling', 'is_new', 'created_at')
     list_filter = ('is_popular', 'is_best_selling', 'is_new', 'is_pet_friendly', 'bedrooms', 'bathrooms', 'created_at')
     search_fields = ('title', 'description')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('images_count_display', 'created_at', 'updated_at')
     inlines = [HousePlanImageInline, FloorInline, FeatureInline, AmenityInline]
     
     fieldsets = (
@@ -232,9 +246,9 @@ class HousePlanAdmin(admin.ModelAdmin):
             'fields': ('primary_image', 'video_url'),
             'description': 'Primary/thumbnail image and YouTube video URL'
         }),
-        ('Bulk Images Upload', {
-            'fields': ('bulk_images',),
-            'description': 'Select multiple images to upload in one go.'
+        ('Add More Images (Append)', {
+            'fields': ('images_count_display', 'bulk_images'),
+            'description': 'Existing images are kept. Any files selected here are appended to this plan.'
         }),
         ('Features & Status', {
             'fields': ('is_popular', 'is_best_selling', 'is_new', 'is_pet_friendly')
@@ -251,27 +265,45 @@ class HousePlanAdmin(admin.ModelAdmin):
         }
         js = ('admin/js/houseplan-admin.js',)
 
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        bulk_files = form.cleaned_data.get('bulk_images') or []
+    def images_count_display(self, obj):
+        if not obj or not obj.pk:
+            return 'No images yet'
+        return f'{obj.images.count()} images currently saved'
+    images_count_display.short_description = 'Current Images'
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(super().get_readonly_fields(request, obj))
+        if obj is None and 'images_count_display' in fields:
+            fields.remove('images_count_display')
+        return fields
+
+    def _append_bulk_images(self, obj, bulk_files):
         if not isinstance(bulk_files, (list, tuple)):
             bulk_files = [bulk_files] if bulk_files else []
 
-        if bulk_files:
-            max_order = (
-                HousePlanImage.objects.filter(house_plan=obj)
-                .aggregate(Max('order'))
-                .get('order__max')
-            ) or 0
-            next_order = max_order + 1
-            for uploaded in bulk_files:
-                HousePlanImage.objects.create(
-                    house_plan=obj,
-                    image=uploaded,
-                    title=uploaded.name,
-                    order=next_order
-                )
-                next_order += 1
+        if not bulk_files:
+            return
+
+        max_order = (
+            HousePlanImage.objects.filter(house_plan=obj)
+            .aggregate(Max('order'))
+            .get('order__max')
+        ) or 0
+        next_order = max_order + 1
+
+        for uploaded in bulk_files:
+            HousePlanImage.objects.create(
+                house_plan=obj,
+                image=uploaded,
+                title=uploaded.name,
+                order=next_order
+            )
+            next_order += 1
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        bulk_files = form.cleaned_data.get('bulk_images') or []
+        self._append_bulk_images(obj, bulk_files)
 
 
 @admin.register(HousePlanImage)
