@@ -261,9 +261,9 @@ class HousePlanAdmin(admin.ModelAdmin):
 
     class Media:
         css = {
-            'all': ('admin/css/houseplan-admin.css?v=20260706',)
+            'all': ('admin/css/houseplan-admin.css',)
         }
-        js = ('admin/js/houseplan-admin.js?v=20260706',)
+        js = ('admin/js/houseplan-admin.js',)
 
     def images_count_display(self, obj):
         if not obj or not obj.pk:
