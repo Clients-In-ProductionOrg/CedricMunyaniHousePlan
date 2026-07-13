@@ -261,9 +261,9 @@ class HousePlanAdmin(admin.ModelAdmin):
 
     class Media:
         css = {
-            'all': ('admin/css/houseplan-admin.css',)
+            'all': ('admin/css/houseplan-admin.css?v=20260706',)
         }
-        js = ('admin/js/houseplan-admin.js',)
+        js = ('admin/js/houseplan-admin.js?v=20260706',)
 
     def images_count_display(self, obj):
         if not obj or not obj.pk:
@@ -276,6 +276,21 @@ class HousePlanAdmin(admin.ModelAdmin):
         if obj is None and 'images_count_display' in fields:
             fields.remove('images_count_display')
         return fields
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj is not None:
+            return fieldsets
+
+        filtered_fieldsets = []
+        for title, opts in fieldsets:
+            fields = opts.get('fields', ())
+            cleaned_fields = tuple(field for field in fields if field != 'images_count_display')
+            new_opts = dict(opts)
+            new_opts['fields'] = cleaned_fields
+            filtered_fieldsets.append((title, new_opts))
+
+        return tuple(filtered_fieldsets)
 
     def _append_bulk_images(self, obj, bulk_files):
         if not isinstance(bulk_files, (list, tuple)):

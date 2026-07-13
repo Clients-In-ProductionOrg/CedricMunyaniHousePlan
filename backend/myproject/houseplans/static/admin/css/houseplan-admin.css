@@ -2,3 +2,72 @@
 .form-row.field-first_floor_description .flex-container > label {
     font-weight: 700;
 }
+
+.upload-progress-container {
+    margin: 10px 0 16px;
+    padding: 12px;
+    border: 1px solid #c7d2e0;
+    border-radius: 6px;
+    background: #f4f8ff;
+    color: #18212f;
+}
+
+.upload-progress-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #18212f;
+}
+
+.upload-progress-percent {
+    color: #0f4fc7;
+}
+
+.upload-progress-track {
+    width: 100%;
+    height: 14px;
+    border-radius: 999px;
+    background: #dbe7fa;
+    overflow: hidden;
+}
+
+.upload-progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #2f7df6, #32b7ff);
+    transition: width 0.2s ease;
+}
+
+.upload-progress-meta {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #2b3b52;
+}
+
+/* Django admin dark theme support */
+html[data-theme='dark'] .upload-progress-container,
+body[data-theme='dark'] .upload-progress-container {
+    background: #162131;
+    border-color: #2d3d55;
+    color: #e8eef7;
+}
+
+html[data-theme='dark'] .upload-progress-label,
+body[data-theme='dark'] .upload-progress-label {
+    color: #e8eef7;
+}
+
+html[data-theme='dark'] .upload-progress-percent,
+body[data-theme='dark'] .upload-progress-percent {
+    color: #7ab4ff;
+}
+
+html[data-theme='dark'] .upload-progress-track,
+body[data-theme='dark'] .upload-progress-track {
+    background: #24344a;
+}
+
+html[data-theme='dark'] .upload-progress-meta,
+body[data-theme='dark'] .upload-progress-meta {
+    color: #c5d3e6;
+}
